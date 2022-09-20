@@ -19,7 +19,9 @@ conda install -c conda-forge pycocotools
 
 # Dataset
 ~~~
-idx_Color_FecalResidue_urbidity
+#labelme to coco
+
+labelme2coco .\data\bmc
 ~~~
 
 라벨 오류
