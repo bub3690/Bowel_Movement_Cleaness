@@ -1,3 +1,5 @@
 labelme2coco
 pandas
 fiftyone
+labelme
+wandb

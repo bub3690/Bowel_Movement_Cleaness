@@ -35,3 +35,8 @@ labelme2coco .\data\bmc
 - PANO_20200407_221523 (1077)
 - PANO_20200407_221527 (1078)
 - PANO_20210330_062718 (1080)
+
+~~~
+python ./labelme2voc.py C:\Users\mai\Bowel_Movement_Cleaness\data\bmc_label C:\Users\mai\Bowel_Movement_Cleaness\data\bmc_label_voc --labels labels.txt
+~~~
+

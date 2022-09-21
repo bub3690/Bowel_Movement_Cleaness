@@ -1,3 +1,6 @@
 [submodule "mmsegmentation"]
 	path = mmsegmentation
 	url = https://github.com/KimDaeYu/mmsegmentation.git
+[submodule "labelme"]
+	path = labelme
+	url = https://github.com/KimDaeYu/labelme.git
