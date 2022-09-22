@@ -3,3 +3,4 @@ pandas
 fiftyone
 labelme
 wandb
+imblearn
