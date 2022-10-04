@@ -4,3 +4,6 @@
 [submodule "labelme"]
 	path = labelme
 	url = https://github.com/KimDaeYu/labelme.git
+[submodule "mmclassification_bowel"]
+	path = mmclassification_bowel
+	url = https://github.com/bub3690/mmclassification_bowel
