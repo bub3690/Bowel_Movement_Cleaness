@@ -12,6 +12,12 @@ cd mmsegmentation
 pip install -r requirements.txt
 
 
+pip install openmim
+mim install mmcv-full
+cd ../mmclassification_bowel
+pip install -e .
+
+
 # fiftyone (pycocotools error)
 conda install -c conda-forge pycocotools
 ~~~

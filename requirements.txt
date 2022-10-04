@@ -4,3 +4,4 @@ fiftyone
 labelme
 wandb
 imblearn
+imgviz
