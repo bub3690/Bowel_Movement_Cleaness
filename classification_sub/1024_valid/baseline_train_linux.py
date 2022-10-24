@@ -85,12 +85,13 @@ class BowelDatasetSegment(Dataset):
         mask.sum(axis=2)
         mask = mask.sum(axis=2) > 0
         mask=self.to_tensor(mask)
+        mask=mask.unsqueeze(0)
 
         box = masks_to_boxes(mask)[0] # (xmin, ymin, xmax, ymax) 
         box= box.to(torch.int32)
         mask=mask[0,box[1]:box[3],box[0]:box[2]]
         image=image[:,box[1]:box[3],box[0]:box[2]]
-
+        
         #여기서 MASK 확장
         mask = mask.expand(3,-1,-1)
         image = mask * image
