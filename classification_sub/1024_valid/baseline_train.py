@@ -349,6 +349,12 @@ def main():
 
         print("\n[EPOCH:{}]\t Train Loss:{:.4f}\t Train Acc:{:.2f} %  | \tValid Loss:{:.4f} \tValid Acc: {:.2f} %\n".
             format(Epoch,train_loss,train_accuracy,valid_loss,valid_accuracy))
+
+        wandb.log({
+            "train Accuracy": train_accuracy,
+            "train loss": train_loss},
+            commit=True,
+            step=Epoch)            
         wandb.log({
             "valid Accuracy": valid_accuracy,
             "valid loss": valid_loss},
