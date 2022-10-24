@@ -233,7 +233,7 @@ def test_evaluate(model,test_loader,criterion,DEVICE):
         return predictions,answers,test_loss
 
 def get_num(file_str):
-    return int(file_str.split("\\")[-1].split(".")[0])
+    return int(file_str.split("/")[-1].split(".")[0])
 
 def main():
     # Training settings
