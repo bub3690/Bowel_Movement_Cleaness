@@ -33,7 +33,7 @@ import argparse
 import wandb
 
 
-p = os.path.abspath('../../utils') # 상위 폴더를 사용하기 위해서.
+p = os.path.abspath('../../Utils') # 상위 폴더를 사용하기 위해서.
 sys.path.insert(1, p)
 from pytorchtools.pytorchtools import EarlyStopping # 상위 폴더에 추가된 모듈.
 
@@ -41,13 +41,12 @@ from pytorchtools.pytorchtools import EarlyStopping # 상위 폴더에 추가된
 
 
 class BowelDataset(Dataset):
-    def __init__(self, data_path_list,mask_path_list,label_df,to_tensor,transform,sublabel):
+    def __init__(self, data_path_list,label_df,to_tensor,transform,sublabel):
         self.data_path_list = data_path_list
         self.label_df = label_df
         self.to_tensor = to_tensor
         self.transform = transform
         self.sublabel = sublabel #sublabel : color,residue,turbidity,label
-        self.mask_path_list = mask_path_list
 
     def __len__(self):
         return len(self.data_path_list)
