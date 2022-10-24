@@ -12,7 +12,7 @@ import torch.nn.functional as F #그중 자주 쓰이는것들을 F로
 from torchvision import transforms, datasets
 import torchvision.models as models
 import cv2
-
+from torchvision.ops import masks_to_boxes
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -78,16 +78,22 @@ class BowelDatasetSegment(Dataset):
         file_path = self.data_path_list[idx]
         image = cv2.imread(file_path)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        image=self.to_tensor(image)
 
         mask_path = self.mask_path_list[idx]
         mask = cv2.imread(mask_path)
         mask.sum(axis=2)
         mask = mask.sum(axis=2) > 0
-        mask = np.expand_dims(mask,axis=2)
+        mask=self.to_tensor(mask)
 
+        box = masks_to_boxes(mask)[0] # (xmin, ymin, xmax, ymax) 
+        box= box.to(torch.int32)
+        mask=mask[0,box[1]:box[3],box[0]:box[2]]
+        image=image[:,box[1]:box[3],box[0]:box[2]]
+
+        #여기서 MASK 확장
+        mask = mask.expand(3,-1,-1)
         image = mask * image
-
-        image=self.to_tensor(image)
         
         if self.transform:
             #1. 이미지 사이즈 변환
@@ -108,7 +114,7 @@ def load_dataloader(add_seg,X,Y_df,sublabel,BATCH_SIZE,mask_path_list=None):
                                                             ),
                                                 batch_size = BATCH_SIZE,
                                                 shuffle = True,
-                                                num_workers=4
+                                                num_workers=0
                                                 ) # 순서가 암기되는것을 막기위해.
     else:
         #segmentation을 사용하는 경우
@@ -125,7 +131,7 @@ def load_dataloader(add_seg,X,Y_df,sublabel,BATCH_SIZE,mask_path_list=None):
                                                             ),
                                                 batch_size = BATCH_SIZE,
                                                 shuffle = True,
-                                                num_workers=4
+                                                num_workers=0
                                                 ) # 순서가 암기되는것을 막기위해.        
     return loader
 
@@ -325,7 +331,7 @@ def main():
 
     sublabel_count=len(set(label_df[sublabel]))
     # 학습 
-    check_path = './checkpoint/baseline_'+'get'+args.sublabel+'_'+args.model+'_512_'+'.pt'
+    check_path = './checkpoint/baseline_'+'get_'+args.sublabel+'_'+args.model+'_512_'+'segment_'+str(args.add_seg)+'.pt'
     print(check_path)
     early_stopping = EarlyStopping(patience = 3, verbose = True, path=check_path)
 
