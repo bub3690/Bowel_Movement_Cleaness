@@ -108,7 +108,7 @@ def load_dataloader(add_seg,X,Y_df,sublabel,BATCH_SIZE,mask_path_list=None):
                                                             ),
                                                 batch_size = BATCH_SIZE,
                                                 shuffle = True,
-                                                num_workers=-1
+                                                num_workers=4
                                                 ) # 순서가 암기되는것을 막기위해.
     else:
         #segmentation을 사용하는 경우
@@ -125,7 +125,7 @@ def load_dataloader(add_seg,X,Y_df,sublabel,BATCH_SIZE,mask_path_list=None):
                                                             ),
                                                 batch_size = BATCH_SIZE,
                                                 shuffle = True,
-                                                num_workers=-1
+                                                num_workers=4
                                                 ) # 순서가 암기되는것을 막기위해.        
     return loader
 
