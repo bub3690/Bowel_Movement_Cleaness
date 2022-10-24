@@ -85,12 +85,11 @@ class BowelDatasetSegment(Dataset):
         mask.sum(axis=2)
         mask = mask.sum(axis=2) > 0
         mask=self.to_tensor(mask)
-        mask=mask.unsqueeze(0)
 
         box = masks_to_boxes(mask)[0] # (xmin, ymin, xmax, ymax) 
-        box= box.to(torch.int32)
-        mask=mask[0,box[1]:box[3],box[0]:box[2]]
-        image=image[:,box[1]:box[3],box[0]:box[2]]
+        box = box.to(torch.int32)
+        mask = mask[0,box[1]:box[3],box[0]:box[2]]# 1,h,w
+        image = image[:,box[1]:box[3],box[0]:box[2]] # 3,h,w
         
         #여기서 MASK 확장
         mask = mask.expand(3,-1,-1)
@@ -293,12 +292,12 @@ def main():
     # ## train / valid / test
     #1. train, test 나누기
 
-    X_train = glob('../../data/bmc_label_voc_split/images/train/*.jpg')
-    X_valid = glob('../../data/bmc_label_voc_split/images/val/*.jpg')
+    X_train = sorted(glob('../../data/bmc_label_voc_split/images/train/*.jpg'))
+    X_valid = sorted(glob('../../data/bmc_label_voc_split/images/val/*.jpg'))
 
     if args.add_seg==True:
-        X_train_mask = glob('../../data/bmc_label_voc_split/annotations/train/*.png')
-        X_valid_mask = glob('../../data/bmc_label_voc_split/annotations/val/*.png')
+        X_train_mask = sorted(glob('../../data/bmc_label_voc_split/annotations/train/*.png'))
+        X_valid_mask = sorted(glob('../../data/bmc_label_voc_split/annotations/val/*.png'))
    
 
 
