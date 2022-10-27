@@ -28,6 +28,7 @@ from torch.utils.data import Dataset, DataLoader
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import f1_score
 from sklearn.metrics import accuracy_score
+from sklearn.model_selection import train_test_split # train , test 분리에 사용.
 
 import argparse
 import wandb
@@ -36,6 +37,12 @@ import wandb
 p = os.path.abspath('../../Utils') # 상위 폴더를 사용하기 위해서.
 sys.path.insert(1, p)
 from pytorchtools.pytorchtools import EarlyStopping # 상위 폴더에 추가된 모듈.
+
+
+# 기타 함수들
+def get_num(file_str):
+    return int(file_str.split("\\")[-1].split(".")[0])
+
 
 # # 데이터 정의
 
@@ -62,77 +69,22 @@ class BowelDataset(Dataset):
             image=self.transform(image).type(torch.float32)# 이미지 0~1 정규화
         return image, torch.tensor(self.label_df.iloc[idx][self.sublabel])
 
-class BowelDatasetSegment(Dataset):
-    def __init__(self, data_path_list,mask_path_list,label_df,to_tensor,transform,sublabel):
-        self.data_path_list = data_path_list
-        self.label_df = label_df
-        self.to_tensor = to_tensor
-        self.transform = transform
-        self.sublabel = sublabel #sublabel : color,residue,turbidity,label
-        self.mask_path_list = mask_path_list
-
-    def __len__(self):
-        return len(self.data_path_list)
-
-    def __getitem__(self, idx):
-        file_path = self.data_path_list[idx]
-        image = cv2.imread(file_path)
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        image=self.to_tensor(image)
-
-        mask_path = self.mask_path_list[idx]
-        mask = cv2.imread(mask_path)
-        mask.sum(axis=2)
-        mask = mask.sum(axis=2) > 0
-        mask=self.to_tensor(mask)
-
-        box = masks_to_boxes(mask)[0] # (xmin, ymin, xmax, ymax) 
-        box= box.to(torch.int32)
-        mask=mask[0,box[1]:box[3],box[0]:box[2]]
-        image=image[:,box[1]:box[3],box[0]:box[2]]
-
-        #여기서 MASK 확장
-        mask = mask.expand(3,-1,-1)
-        image = mask * image
-        
-        if self.transform:
-            #1. 이미지 사이즈 변환
-            image=self.transform(image).type(torch.float32)# 이미지 0~1 정규화
-        return image, torch.tensor(self.label_df.iloc[idx][self.sublabel])
-
-def load_dataloader(add_seg,X,Y_df,sublabel,BATCH_SIZE,mask_path_list=None):
-    if add_seg==False:
-        loader = torch.utils.data.DataLoader(dataset = 
-                                                BowelDataset(X,
-                                                            Y_df,
-                                                            to_tensor = transforms.ToTensor(),
-                                                            transform = torch.nn.Sequential(
-                                                                    transforms.Resize([512,512]),
-                                                                    transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
-                                                                ),
-                                                            sublabel=sublabel # color,residue,turbidity, label 중 어느것을 맞추려는지 입력.
+def load_dataloader(X,Y_df,sublabel,BATCH_SIZE):
+    loader = torch.utils.data.DataLoader(dataset = 
+                                            BowelDataset(X,
+                                                        Y_df,
+                                                        to_tensor = transforms.ToTensor(),
+                                                        transform = torch.nn.Sequential(
+                                                                transforms.Resize([512,512]),
+                                                                transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
                                                             ),
-                                                batch_size = BATCH_SIZE,
-                                                shuffle = True,
-                                                num_workers=0
-                                                ) # 순서가 암기되는것을 막기위해.
-    else:
-        #segmentation을 사용하는 경우
-        loader = torch.utils.data.DataLoader(dataset = 
-                                                BowelDatasetSegment(X,
-                                                            mask_path_list,
-                                                            Y_df,
-                                                            to_tensor = transforms.ToTensor(),
-                                                            transform = torch.nn.Sequential(
-                                                                    transforms.Resize([512,512]),
-                                                                    transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
-                                                                ),
-                                                            sublabel=sublabel # color,residue,turbidity, label 중 어느것을 맞추려는지 입력.
-                                                            ),
-                                                batch_size = BATCH_SIZE,
-                                                shuffle = True,
-                                                num_workers=0
-                                                ) # 순서가 암기되는것을 막기위해.        
+                                                        sublabel=sublabel # color,residue,turbidity, label 중 어느것을 맞추려는지 입력.
+                                                        ),
+                                            batch_size = BATCH_SIZE,
+                                            shuffle = True,
+                                            num_workers=0
+                                            ) # 순서가 암기되는것을 막기위해.
+
     return loader
 
 
@@ -238,8 +190,8 @@ def test_evaluate(model,test_loader,criterion,DEVICE):
             
         return predictions,answers,test_loss
 
-def get_num(file_str):
-    return int(file_str.split("\\")[-1].split(".")[0])
+
+
 
 def main():
     # Training settings
@@ -262,16 +214,18 @@ def main():
                             help='write descript for wandb')
     parser.add_argument('--project-name',type=str, default='BMC_vision_classification',
                             help='project name for wandb')
+    parser.add_argument('--tag',type=str,default=None,help='tag for experiment')
+    parser.add_argument('--seed',type=int,default=1004,help='set the validation seed')
 
     args = parser.parse_args()
 
     if args.wandb:
         project_name = args.project_name
-        wandb.init(project=project_name, entity="bub3690")
+        wandb.init(project=project_name, entity="bub3690",tags=[args.tag])
         wandb_run_name = args.model+'_512x512'+args.descript+'_classification'+'_segment_'+str(args.add_seg)
         wandb.run.name = wandb_run_name
         wandb.run.save()
-
+        wandb.run.summary.update({"seed" : args.seed,})
 
     if torch.cuda.is_available():
         DEVICE = torch.device('cuda')
@@ -292,43 +246,37 @@ def main():
     # ## train / valid / test
     #1. train, test 나누기
 
-    X_train = glob('../../data/bmc_label_voc_split/images/train/*.jpg')
-    X_valid = glob('../../data/bmc_label_voc_split/images/val/*.jpg')
 
-    if args.add_seg==True:
-        X_train_mask = glob('../../data/bmc_label_voc_split/annotations/train/*.png')
-        X_valid_mask = glob('../../data/bmc_label_voc_split/annotations/val/*.png')
-   
+    if args.add_seg==False:
+        X_images = glob('../../data/bmc_label_voc/JPEGImages/*.jpg')
+        X_train, X_valid = train_test_split(X_images, test_size=0.2,random_state=args.seed)
+    else:
+        X_mask = glob('../../data/bmc_label_voc/SegmentationMaskedJPG/*.jpg') # 수정 필요.
+        X_train, X_valid = train_test_split(X_mask, test_size=0.2,random_state=1004)
 
-
-    X_train_name=list(map(get_num,X_train))
-    X_valid_name=list(map(get_num,X_valid))
+    X_train_name = list(map(get_num,X_train))
+    X_valid_name = list(map(get_num,X_valid))
 
     #첫번째 열 이름 바꿔주기
     label_df = pd.read_csv('../../bmc.csv')
     column_names = list(label_df.columns)
-    column_names[0]='file_name'
+    column_names[0] = 'file_name'
     label_df.columns = column_names
 
     # Y값 찾아오기
     Y_train_df=pd.merge(pd.DataFrame(X_train_name,columns=['file_name']),label_df,left_on='file_name',right_on='file_name',how='inner')
     Y_valid_df=pd.merge(pd.DataFrame(X_valid_name,columns=['file_name']),label_df,left_on='file_name',right_on='file_name',how='inner')
+    
     print("---")
     print("훈련 셋 : ",len(Y_train_df),Counter(Y_train_df['label']))
     print("검증 셋 : ",len(Y_valid_df),Counter(Y_valid_df['label']))
     print("---")
+    
+    train_loader = load_dataloader(X_train,Y_train_df,sublabel,BATCH_SIZE)
+    valid_loader = load_dataloader(X_valid,Y_valid_df,sublabel,BATCH_SIZE)
+    test_loader = load_dataloader(X_valid,Y_valid_df,sublabel,BATCH_SIZE)
 
     
-    if args.add_seg==False:
-        train_loader = load_dataloader(args.add_seg,X_train,Y_train_df,sublabel,BATCH_SIZE)
-        valid_loader = load_dataloader(args.add_seg,X_valid,Y_valid_df,sublabel,BATCH_SIZE)
-        test_loader = load_dataloader(args.add_seg,X_valid,Y_valid_df,sublabel,BATCH_SIZE)
-    else:
-        #segmentation을 사용한 경우
-        train_loader = load_dataloader(args.add_seg,X_train,Y_train_df,sublabel,BATCH_SIZE,X_train_mask)
-        valid_loader = load_dataloader(args.add_seg,X_valid,Y_valid_df,sublabel,BATCH_SIZE,X_valid_mask)
-        test_loader = load_dataloader(args.add_seg,X_valid,Y_valid_df,sublabel,BATCH_SIZE,X_valid_mask)
-
     sublabel_count=len(set(label_df[sublabel]))
     # 학습 
     check_path = './checkpoint/baseline_'+'get_'+args.sublabel+'_'+args.model+'_512_'+'segment_'+str(args.add_seg)+'.pt'
@@ -342,6 +290,7 @@ def main():
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(),lr=lr)
 
+
     print("학습 시작")
     for Epoch in range(1,EPOCHS+1):
         train_loss,train_accuracy = train(model,train_loader,optimizer,criterion,DEVICE)
@@ -350,22 +299,21 @@ def main():
         print("\n[EPOCH:{}]\t Train Loss:{:.4f}\t Train Acc:{:.2f} %  | \tValid Loss:{:.4f} \tValid Acc: {:.2f} %\n".
             format(Epoch,train_loss,train_accuracy,valid_loss,valid_accuracy))
 
-        wandb.log({
-            "train Accuracy": train_accuracy,
-            "train loss": train_loss},
-            commit=True,
-            step=Epoch)            
-        wandb.log({
-            "valid Accuracy": valid_accuracy,
-            "valid loss": valid_loss},
-            commit=True,
-            step=Epoch)
+        if args.wandb:
+            wandb.log({
+                "train Accuracy": train_accuracy,
+                "train loss": train_loss,
+                "valid Accuracy": valid_accuracy,
+                "valid loss": valid_loss,},
+                commit=True,
+                step=Epoch)
 
         early_stopping(valid_loss, model)
         if -early_stopping.best_score == valid_loss:
             best_train_acc, best_valid_acc = train_accuracy,valid_accuracy
-            wandb.run.summary.update({"best_valid_acc" : best_valid_acc})
-            wandb.run.summary.update({"best_valid_loss" : valid_loss})
+            if args.wandb:
+                wandb.run.summary.update({"best_valid_acc" : best_valid_acc,
+                                         "best_valid_loss" : valid_loss})
 
         if early_stopping.early_stop:
                 #train_accs.append(best_train_acc)
@@ -397,8 +345,8 @@ def main():
     #fscroe macro추가
     fscore = f1_score(answers,predictions,average='macro')
     acc = accuracy_score(answers,predictions)
-    wandb.run.summary.update({"valid_acc" : acc*100})
-    wandb.run.summary.update({"valid_f1" : fscore})
+    wandb.run.summary.update({"last valid_acc" : acc*100,
+                              "last valid_f1" : fscore})
 
     print("Accuracy : {:.4f}% ".format(acc*100))
     print("f score : {:.4f} ".format(fscore))
