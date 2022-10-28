@@ -1,0 +1,9 @@
+python .\baseline_train.py --batch-size 32 --epochs 40 --lr 0.0001 --sublabel label --wandb True  --descript 'baseline_segment 2' --project-name BMC_vision_classification --seed 1005 --tag baseline_seg --add-seg True
+python .\baseline_train.py --batch-size 32 --epochs 40 --lr 0.0001 --sublabel label --wandb True  --descript 'baseline_segment 3' --project-name BMC_vision_classification --seed 1006 --tag baseline_seg --add-seg True
+python .\baseline_train.py --batch-size 32 --epochs 40 --lr 0.0001 --sublabel label --wandb True  --descript 'baseline_segment 4' --project-name BMC_vision_classification --seed 1007 --tag baseline_seg --add-seg True
+python .\baseline_train.py --batch-size 32 --epochs 40 --lr 0.0001 --sublabel label --wandb True  --descript 'baseline_segment 5' --project-name BMC_vision_classification --seed 1008 --tag baseline_seg --add-seg True
+python .\baseline_train.py --batch-size 32 --epochs 40 --lr 0.0001 --sublabel label --wandb True  --descript 'baseline_segment 6' --project-name BMC_vision_classification --seed 1009 --tag baseline_seg --add-seg True
+python .\baseline_train.py --batch-size 32 --epochs 40 --lr 0.0001 --sublabel label --wandb True  --descript 'baseline_segment 7' --project-name BMC_vision_classification --seed 1010 --tag baseline_seg --add-seg True
+python .\baseline_train.py --batch-size 32 --epochs 40 --lr 0.0001 --sublabel label --wandb True  --descript 'baseline_segment 8' --project-name BMC_vision_classification --seed 1011 --tag baseline_seg --add-seg True
+python .\baseline_train.py --batch-size 32 --epochs 40 --lr 0.0001 --sublabel label --wandb True  --descript 'baseline_segment 9' --project-name BMC_vision_classification --seed 1012 --tag baseline_seg --add-seg True
+python .\baseline_train.py --batch-size 32 --epochs 40 --lr 0.0001 --sublabel label --wandb True  --descript 'baseline_segment 10' --project-name BMC_vision_classification --seed 1013 --tag baseline_seg --add-seg True
