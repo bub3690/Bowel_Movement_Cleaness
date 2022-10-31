@@ -1,0 +1,9 @@
+python .\baseline_train.py --batch-size 32 --epochs 40 --lr 0.0001 --sublabel color --wandb True  --descript 'baseline 2' --project-name BMC_vision_classification --seed 1005 --tag baseline_color
+python .\baseline_train.py --batch-size 32 --epochs 40 --lr 0.0001 --sublabel color --wandb True  --descript 'baseline 3' --project-name BMC_vision_classification --seed 1006 --tag baseline_color
+python .\baseline_train.py --batch-size 32 --epochs 40 --lr 0.0001 --sublabel color --wandb True  --descript 'baseline 4' --project-name BMC_vision_classification --seed 1007 --tag baseline_color
+python .\baseline_train.py --batch-size 32 --epochs 40 --lr 0.0001 --sublabel color --wandb True  --descript 'baseline 5' --project-name BMC_vision_classification --seed 1008 --tag baseline_color
+python .\baseline_train.py --batch-size 32 --epochs 40 --lr 0.0001 --sublabel color --wandb True  --descript 'baseline 6' --project-name BMC_vision_classification --seed 1009 --tag baseline_color
+python .\baseline_train.py --batch-size 32 --epochs 40 --lr 0.0001 --sublabel color --wandb True  --descript 'baseline 7' --project-name BMC_vision_classification --seed 1010 --tag baseline_color
+python .\baseline_train.py --batch-size 32 --epochs 40 --lr 0.0001 --sublabel color --wandb True  --descript 'baseline 8' --project-name BMC_vision_classification --seed 1011 --tag baseline_color
+python .\baseline_train.py --batch-size 32 --epochs 40 --lr 0.0001 --sublabel color --wandb True  --descript 'baseline 9' --project-name BMC_vision_classification --seed 1012 --tag baseline_color
+python .\baseline_train.py --batch-size 32 --epochs 40 --lr 0.0001 --sublabel color --wandb True  --descript 'baseline 10' --project-name BMC_vision_classification --seed 1013 --tag baseline_color
