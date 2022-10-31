@@ -82,7 +82,7 @@ def load_dataloader(X,Y_df,sublabel,BATCH_SIZE):
                                                         ),
                                             batch_size = BATCH_SIZE,
                                             shuffle = True,
-                                            num_workers=0
+                                            num_workers=4
                                             ) # 순서가 암기되는것을 막기위해.
 
     return loader
