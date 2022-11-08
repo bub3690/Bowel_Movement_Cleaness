@@ -1,0 +1,10 @@
+python baseline_train.py --batch-size 32 --epochs 40 --lr 0.0001 --sublabel label --multilabel True --wandb True --seed 1004 --tag baseline_multi --project-name BMC_vision_classification
+python baseline_train.py --batch-size 32 --epochs 40 --lr 0.0001 --sublabel label --multilabel True --wandb True --seed 1005 --tag baseline_multi --project-name BMC_vision_classification
+python baseline_train.py --batch-size 32 --epochs 40 --lr 0.0001 --sublabel label --multilabel True --wandb True --seed 1006 --tag baseline_multi --project-name BMC_vision_classification
+python baseline_train.py --batch-size 32 --epochs 40 --lr 0.0001 --sublabel label --multilabel True --wandb True --seed 1007 --tag baseline_multi --project-name BMC_vision_classification
+python baseline_train.py --batch-size 32 --epochs 40 --lr 0.0001 --sublabel label --multilabel True --wandb True --seed 1008 --tag baseline_multi --project-name BMC_vision_classification
+python baseline_train.py --batch-size 32 --epochs 40 --lr 0.0001 --sublabel label --multilabel True --wandb True --seed 1009 --tag baseline_multi --project-name BMC_vision_classification
+python baseline_train.py --batch-size 32 --epochs 40 --lr 0.0001 --sublabel label --multilabel True --wandb True --seed 1010 --tag baseline_multi --project-name BMC_vision_classification
+python baseline_train.py --batch-size 32 --epochs 40 --lr 0.0001 --sublabel label --multilabel True --wandb True --seed 1011 --tag baseline_multi --project-name BMC_vision_classification
+python baseline_train.py --batch-size 32 --epochs 40 --lr 0.0001 --sublabel label --multilabel True --wandb True --seed 1012 --tag baseline_multi --project-name BMC_vision_classification
+python baseline_train.py --batch-size 32 --epochs 40 --lr 0.0001 --sublabel label --multilabel True --wandb True --seed 1013 --tag baseline_multi --project-name BMC_vision_classification
