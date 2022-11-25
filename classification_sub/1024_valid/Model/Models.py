@@ -69,6 +69,45 @@ class ResLayer_multilabel(nn.Module):
         x  = self.fc2(torch.cat([x,sublabel],axis=1))
         return x
 
+class ResLayer_multilabel_ver2(nn.Module):
+    def __init__(self,sublabel_count,DEVICE):
+        super(ResLayer_multilabel, self).__init__()
+        self.model = models.resnet18(weights='IMAGENET1K_V1').to(DEVICE)
+        self.num_ftrs = self.model.fc.out_features
+        
+        self.residue = nn.Sequential(
+                        nn.Linear(self.num_ftrs, 3),
+                    )
+
+        self.color = nn.Sequential(
+                        nn.Linear(self.num_ftrs, 3),
+                    )
+        self.turbidity = nn.Sequential(
+                        nn.Linear(self.num_ftrs, 2),
+                    )
+
+        self.fc1 = nn.Sequential(              
+                        nn.Linear(self.num_ftrs + 8, 64),
+                        nn.BatchNorm1d(64),
+                        nn.ReLU(),
+                        nn.Dropout(p=0.5),        
+                        nn.Linear(64,50),
+                        nn.BatchNorm1d(50),
+                        nn.ReLU(),
+                        nn.Linear(50,)
+                    )
+
+    def forward(self, x, sublabel):
+        
+        back = self.model(x)
+
+        res = self.residue(back)
+        col = self.color(back)
+        tur = self.turbidity(back)
+        x  = self.fc1(torch.cat([back,res,col,tur],axis=1))
+        return x
+
+
 def model_initialize(sublabel_count,DEVICE,multilabel=False):
     if multilabel:
         model = ResLayer_multilabel(sublabel_count,DEVICE).to(DEVICE)
