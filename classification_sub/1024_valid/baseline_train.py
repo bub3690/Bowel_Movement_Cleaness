@@ -1,7 +1,7 @@
 # # baseline
 # 
 # - classification baseline code
-# 사용법: python baseline_train.py --batch-size 32 --epochs 40 --lr 0.0001 --sublabel label --multilabel True --wandb True --seed 1004 --tag baseline_multi --project-name BMC_vision_classification
+# 사용법: python baseline_train.py --batch-size 32 --epochs 40 --lr 0.0001 --sublabel label --multilabel True --augment None --wandb True --seed 1004 --tag baseline_multi --project-name BMC_vision_classification
 # 
 # 
 
@@ -9,10 +9,8 @@
 import torch
 import torch.nn as nn # 인공 신경망 모델들 모아놓은 모듈
 import torch.nn.functional as F #그중 자주 쓰이는것들을 F로
-from torchvision import transforms, datasets
-import torchvision.models as models
-import cv2
-from torchvision.ops import masks_to_boxes
+
+
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -24,7 +22,6 @@ from tqdm import tqdm
 
 from collections import Counter
 import torch
-from torch.utils.data import Dataset, DataLoader
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import f1_score
 from sklearn.metrics import accuracy_score
@@ -34,9 +31,20 @@ import argparse
 import wandb
 
 
-p = os.path.abspath('../../Utils') # 상위 폴더를 사용하기 위해서.
-sys.path.insert(1, p)
-from pytorchtools.pytorchtools import EarlyStopping # 상위 폴더에 추가된 모듈.
+#Modules
+from Model.Models import model_initialize
+from Trainer.Trainer import train,train_multilabel,\
+    evaluate,test_evaluate,\
+    test_evaluate_multilabel,evaluate_multilabel
+from Dataset.Dataset import load_dataloader
+
+##
+
+
+
+#p = os.path.abspath('../../Utils') # 상위 폴더를 사용하기 위해서.
+#sys.path.insert(1, p)
+from Utils.pytorchtools import EarlyStopping # 상위 폴더에 추가된 모듈.
 
 
 # 기타 함수들
@@ -44,252 +52,7 @@ def get_num(file_str):
     return int(file_str.split("\\")[-1].split(".")[0])
 
 
-# # 데이터 정의
 
-
-class BowelDataset(Dataset):
-    def __init__(self, data_path_list,label_df,to_tensor,transform,sublabel,multilabel):
-        self.data_path_list = data_path_list
-        self.label_df = label_df
-        self.to_tensor = to_tensor
-        self.transform = transform
-        self.sublabel = sublabel #sublabel : color,residue,turbidity,label
-        self.multilabel = multilabel # True or False
-
-    def __len__(self):
-        return len(self.data_path_list)
-
-    def __getitem__(self, idx):
-        file_path = self.data_path_list[idx]
-        image = cv2.imread(file_path)
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        image=self.to_tensor(image)
-        
-        if self.transform:
-            #1. 이미지 사이즈 변환
-            image=self.transform(image).type(torch.float32)# 이미지 0~1 정규화
-
-        if self.multilabel:
-            return image, torch.tensor(self.label_df.iloc[idx][self.sublabel]), torch.tensor(self.label_df.iloc[idx][['color','residue','turbidity']]) 
-
-
-        return image, torch.tensor(self.label_df.iloc[idx][self.sublabel])
-
-def load_dataloader(X,Y_df,sublabel,BATCH_SIZE,multilabel):
-    loader = torch.utils.data.DataLoader(dataset = 
-                                            BowelDataset(X,
-                                                        Y_df,
-                                                        to_tensor = transforms.ToTensor(),
-                                                        transform = torch.nn.Sequential(
-                                                                transforms.Resize([512,512]),
-                                                                transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
-                                                            ),
-                                                        sublabel=sublabel, # color,residue,turbidity, label 중 어느것을 맞추려는지 입력.
-                                                        multilabel=multilabel,
-                                                        ),
-                                            batch_size = BATCH_SIZE,
-                                            shuffle = True,
-                                            num_workers=0
-                                            ) # 순서가 암기되는것을 막기위해.
-
-    return loader
-
-
-# # 모델 설계
-# 
-# - 기본 resnet18
-
-
-# pretrained
-
-class ResLayer(nn.Module):
-    def __init__(self,sublabel_count,DEVICE):
-        super(ResLayer, self).__init__()
-        self.model = models.resnet18(weights='IMAGENET1K_V1').to(DEVICE)
-        self.num_ftrs = self.model.fc.out_features
-        
-        self.fc = nn.Sequential(
-            #nn.BatchNorm1d(self.num_ftrs+self.n_mfcc),                
-            nn.Linear(self.num_ftrs, 64),
-                             nn.BatchNorm1d(64),
-                             nn.ReLU(),
-                             nn.Dropout(p=0.5),
-                             nn.Linear(64,50),
-                             nn.BatchNorm1d(50),
-                             nn.ReLU(),
-                             nn.Dropout(p=0.5),
-                             nn.Linear(50,sublabel_count)
-                            )
-        
-
-    def forward(self, x):
-        x = self.model(x)
-        x  = self.fc(x)
-        return x
-
-class ResLayer_multilabel(nn.Module):
-    def __init__(self,sublabel_count,DEVICE):
-        super(ResLayer_multilabel, self).__init__()
-        self.model = models.resnet18(weights='IMAGENET1K_V1').to(DEVICE)
-        self.num_ftrs = self.model.fc.out_features
-        
-        
-        
-        self.fc1 = nn.Sequential(
-            #nn.BatchNorm1d(self.num_ftrs+self.n_mfcc),                
-            nn.Linear(self.num_ftrs, 64),
-                             nn.BatchNorm1d(64),
-                             nn.ReLU(),
-                             nn.Dropout(p=0.5),
-                            )
-        self.fc2 = nn.Sequential(
-            #nn.BatchNorm1d(self.num_ftrs+self.n_mfcc),                
-                             nn.Linear(64+3,50),
-                             nn.BatchNorm1d(50),
-                             nn.ReLU(),
-                             nn.Linear(50,sublabel_count)
-                            )
-        
-
-    def forward(self, x, sublabel):
-        x = self.model(x)
-        x  = self.fc1(x)
-        x  = self.fc2(torch.cat([x,sublabel],axis=1))
-        return x
-
-def model_initialize(sublabel_count,DEVICE,multilabel=False):
-    if multilabel:
-        model = ResLayer_multilabel(sublabel_count,DEVICE).to(DEVICE)
-    else:
-        model = ResLayer(sublabel_count,DEVICE).to(DEVICE)
-    return model
-
-
-#8. 학습
-def train(model,train_loader,optimizer,criterion,DEVICE):
-    model.train()
-    correct = 0
-    train_loss = 0
-    for batch_idx,(image,label) in tqdm(enumerate(train_loader)):
-        image = image.to(DEVICE)
-        label = label.to(DEVICE)
-        #데이터들 장비에 할당
-        optimizer.zero_grad() # device 에 저장된 gradient 제거
-        output = model(image) # model로 output을 계산
-        loss = criterion(output, label) #loss 계산
-        train_loss += loss.item()
-        prediction = output.max(1,keepdim=True)[1] # 가장 확률이 높은 class 1개를 가져온다.그리고 인덱스만
-        correct += prediction.eq(label.view_as(prediction)).sum().item()# 아웃풋이 배치 사이즈 32개라서.
-        loss.backward() # loss 값을 이용해 gradient를 계산
-        optimizer.step() # Gradient 값을 이용해 파라미터 업데이트.
-    train_loss/=len(train_loader.dataset)
-    train_accuracy = 100. * correct / len(train_loader.dataset)
-    return train_loss,train_accuracy
-
-def train_multilabel(model,train_loader,optimizer,criterion,DEVICE):
-    model.train()
-    correct = 0
-    train_loss = 0
-    for batch_idx,(image,label,sublabel) in tqdm(enumerate(train_loader)):
-        image = image.to(DEVICE)
-        label = label.to(DEVICE)
-        sublabel = sublabel.to(DEVICE)
-        #데이터들 장비에 할당
-        optimizer.zero_grad() # device 에 저장된 gradient 제거
-        output = model(image,sublabel) # model로 output을 계산
-        loss = criterion(output, label) #loss 계산
-        train_loss += loss.item()
-        prediction = output.max(1,keepdim=True)[1] # 가장 확률이 높은 class 1개를 가져온다.그리고 인덱스만
-        correct += prediction.eq(label.view_as(prediction)).sum().item()# 아웃풋이 배치 사이즈 32개라서.
-        loss.backward() # loss 값을 이용해 gradient를 계산
-        optimizer.step() # Gradient 값을 이용해 파라미터 업데이트.
-    train_loss/=len(train_loader.dataset)
-    train_accuracy = 100. * correct / len(train_loader.dataset)
-    return train_loss,train_accuracy    
-
-
-
-#9. 학습 진행하며, validation 데이터로 모델 성능확인
-def evaluate(model,valid_loader,criterion,DEVICE):
-    model.eval()
-    valid_loss = 0
-    correct = 0
-    #no_grad : 그래디언트 값 계산 막기.
-    with torch.no_grad():
-        for image,label in valid_loader:
-            image = image.to(DEVICE)
-            label = label.to(DEVICE)
-            output = model(image)
-            valid_loss += criterion(output, label).item()
-            prediction = output.max(1,keepdim=True)[1] # 가장 확률이 높은 class 1개를 가져온다.그리고 인덱스만
-            correct += prediction.eq(label.view_as(prediction)).sum().item()# 아웃풋이 배치 사이즈 32개라서.
-            #true.false값을 sum해줌. item
-        valid_loss /= len(valid_loader.dataset)
-        valid_accuracy = 100. * correct / len(valid_loader.dataset)
-        return valid_loss,valid_accuracy
-
-def evaluate_multilabel(model,valid_loader,criterion,DEVICE):
-    model.eval()
-    valid_loss = 0
-    correct = 0
-    #no_grad : 그래디언트 값 계산 막기.
-    with torch.no_grad():
-        for image,label,sublabel in valid_loader:
-            image = image.to(DEVICE)
-            label = label.to(DEVICE)
-            sublabel = sublabel.to(DEVICE)
-            output = model(image,sublabel)
-            valid_loss += criterion(output, label).item()
-            prediction = output.max(1,keepdim=True)[1] # 가장 확률이 높은 class 1개를 가져온다.그리고 인덱스만
-            correct += prediction.eq(label.view_as(prediction)).sum().item()# 아웃풋이 배치 사이즈 32개라서.
-            #true.false값을 sum해줌. item
-        valid_loss /= len(valid_loader.dataset)
-        valid_accuracy = 100. * correct / len(valid_loader.dataset)
-        return valid_loss,valid_accuracy
-
-
-# # test
-
-
-#confusion matrix 계산
-#test set 계산.
-def test_evaluate(model,test_loader,criterion,DEVICE):
-    model.eval()
-    test_loss = 0
-    predictions = []
-    answers = []
-    #no_grad : 그래디언트 값 계산 막기.
-    with torch.no_grad():
-        for image,label in test_loader:
-            image = image.to(DEVICE)
-            label = label.to(DEVICE)
-            output = model(image)
-            test_loss += criterion(output, label).item()
-            prediction = output.max(1,keepdim=True)[1] # 가장 확률이 높은 class 1개를 가져온다.그리고 인덱스만
-            answers +=label
-            predictions +=prediction
-            
-        return predictions,answers,test_loss
-
-
-def test_evaluate_multilabel(model,test_loader,criterion,DEVICE):
-    model.eval()
-    test_loss = 0
-    predictions = []
-    answers = []
-    #no_grad : 그래디언트 값 계산 막기.
-    with torch.no_grad():
-        for image,label,sublabel in test_loader:
-            image = image.to(DEVICE)
-            label = label.to(DEVICE)
-            sublabel = sublabel.to(DEVICE)
-            output = model(image,sublabel)
-            test_loss += criterion(output, label).item()
-            prediction = output.max(1,keepdim=True)[1] # 가장 확률이 높은 class 1개를 가져온다.그리고 인덱스만
-            answers +=label
-            predictions +=prediction
-            
-        return predictions,answers,test_loss
 
 
 
@@ -312,11 +75,13 @@ def main():
                         help='default : res18')
     parser.add_argument('--add-seg',type=bool, default=False,
                         help='use annotations')
+    parser.add_argument('--augment',type=str,default='',help='[None,Base,Erasing,BrightnessContrast]')
     parser.add_argument('--descript',type=str, default='baseline',
                             help='write descript for wandb')
     parser.add_argument('--project-name',type=str, default='BMC_vision_classification',
                             help='project name for wandb')
     parser.add_argument('--tag',type=str,default='',help='tag for experiment')
+
     parser.add_argument('--seed',type=int,default=1004,help='set the validation seed')
 
     args = parser.parse_args()
@@ -324,10 +89,10 @@ def main():
     if args.wandb:
         project_name = args.project_name
         wandb.init(project=project_name, entity="bub3690",tags=[args.tag])
-        wandb_run_name = args.model+'_512x512'+args.descript+'_classification'+'_segment_'+str(args.add_seg)+'_multilabel_'+str(args.multilabel)
+        wandb_run_name = args.model+'_512x512'+args.descript+'_classification'+'_segment_'+str(args.add_seg)+'_augment_'+args.augment+'_multilabel_'+str(args.multilabel)+'_seed_'+str(args.seed)
         wandb.run.name = wandb_run_name
         wandb.run.save()
-        wandb.run.summary.update({"seed" : args.seed,"multilabel":args.multilabel})
+        wandb.run.summary.update({"seed" : args.seed,"multilabel":args.multilabel,"augment":args.augment})
 
     if torch.cuda.is_available():
         DEVICE = torch.device('cuda')
@@ -341,7 +106,7 @@ def main():
     EPOCHS = args.epochs # 전체 데이터 셋을 50번 반복
     lr = args.lr
 
-    #어떤 타겟을 맞출지
+    #어떤 타겟을 맞출지 
     sublabel = args.sublabel
 
     # # 데이터 분류
@@ -374,14 +139,15 @@ def main():
     print("검증 셋 : ",len(Y_valid_df),Counter(Y_valid_df['label']))
     print("---")
     
-    train_loader = load_dataloader(X_train,Y_train_df,sublabel,BATCH_SIZE,args.multilabel)
-    valid_loader = load_dataloader(X_valid,Y_valid_df,sublabel,BATCH_SIZE,args.multilabel)
-    test_loader = load_dataloader(X_valid,Y_valid_df,sublabel,BATCH_SIZE,args.multilabel)
+    train_loader = load_dataloader(X_train,Y_train_df,sublabel,BATCH_SIZE,args.multilabel,args.augment)
+    valid_loader = load_dataloader(X_valid,Y_valid_df,sublabel,BATCH_SIZE,args.multilabel,args.augment)
+    test_loader = load_dataloader(X_valid,Y_valid_df,sublabel,BATCH_SIZE,args.multilabel,args.augment)
 
     
     sublabel_count=len(set(label_df[sublabel]))
+    
     # 학습 
-    check_path = './checkpoint/baseline_'+'get_'+args.sublabel+'_'+args.model+'_512_'+'segment_'+str(args.add_seg)+'_multilabel_'+str(args.multilabel)+'.pt'
+    check_path = './checkpoint/baseline_'+'get_'+args.sublabel+'_'+args.model+'_512_'+'segment_'+str(args.add_seg)+'_augment_'+args.augment+'_multilabel_'+str(args.multilabel)+'_seed_'+str(args.seed)+'.pt'
     print(check_path)
     early_stopping = EarlyStopping(patience = 3, verbose = True, path=check_path)
 
