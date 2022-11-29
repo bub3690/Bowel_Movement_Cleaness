@@ -10,7 +10,7 @@ from .Transforms import get_augementation
 
 # # 데이터 정의
 class BowelDataset(Dataset):
-    def __init__(self, data_path_list,label_df,to_tensor,transform,sublabel,multilabel,augmentation=None):
+    def __init__(self, data_path_list,label_df,to_tensor,transform,sublabel,multilabel,augmentation=None,is_train=False):
         self.data_path_list = data_path_list
         self.label_df = label_df
         self.to_tensor = to_tensor
@@ -18,9 +18,9 @@ class BowelDataset(Dataset):
         self.sublabel = sublabel #sublabel : color,residue,turbidity,label
         self.multilabel = multilabel # True or False
 
-
         self.torch_augmentation = augmentation['torch']
         self.album_augmentation = augmentation['album']
+        self.is_train = is_train
 
     def __len__(self):
         return len(self.data_path_list)
@@ -30,12 +30,12 @@ class BowelDataset(Dataset):
         image = cv2.imread(file_path)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-        if self.album_augmentation:
+        if self.is_train and self.album_augmentation:
             image=self.album_augmentation(image=image)['image']
         
         image=self.to_tensor(image)
         
-        if self.torch_augmentation:
+        if self.is_train and self.torch_augmentation:
             image = self.torch_augmentation(image)
 
         if self.transform:
@@ -49,7 +49,7 @@ class BowelDataset(Dataset):
 
         return image, torch.tensor(self.label_df.iloc[idx][self.sublabel])
 
-def load_dataloader(X,Y_df,sublabel,BATCH_SIZE,multilabel,augmentation):
+def load_dataloader(X,Y_df,sublabel,BATCH_SIZE,multilabel,augmentation,is_train):
     augment_transform=get_augementation(augmentation) #dictionary가 넘어온다.
 
     loader = torch.utils.data.DataLoader(dataset = 
@@ -63,6 +63,7 @@ def load_dataloader(X,Y_df,sublabel,BATCH_SIZE,multilabel,augmentation):
                                                         sublabel=sublabel, # color,residue,turbidity, label 중 어느것을 맞추려는지 입력.
                                                         multilabel=multilabel,
                                                         augmentation=augment_transform,
+                                                        is_train=is_train,
                                                         ),
                                             batch_size = BATCH_SIZE,
                                             shuffle = True,

@@ -35,8 +35,9 @@ class ResLayer(nn.Module):
         
 
     def forward(self, x):
-        x = self.model(x)
+        x  = self.model(x)
         x  = self.fc(x)
+        x  = F.log_softmax(x,dim=1) 
         return x
 
 class ResLayer_multilabel(nn.Module):
@@ -67,6 +68,7 @@ class ResLayer_multilabel(nn.Module):
         x = self.model(x)
         x  = self.fc1(x)
         x  = self.fc2(torch.cat([x,sublabel],axis=1))
+        x = F.log_softmax(x,dim=1)
         return x
 
 class ResLayer_multilabel_ver2(nn.Module):
@@ -94,7 +96,7 @@ class ResLayer_multilabel_ver2(nn.Module):
                         nn.Linear(64,50),
                         nn.BatchNorm1d(50),
                         nn.ReLU(),
-                        nn.Linear(50,)
+                        nn.Linear(50,3)
                     )
 
     def forward(self, x, sublabel):
@@ -104,8 +106,8 @@ class ResLayer_multilabel_ver2(nn.Module):
         res = self.residue(back)
         col = self.color(back)
         tur = self.turbidity(back)
-        x  = self.fc1(torch.cat([back,res,col,tur],axis=1))
-        return x
+        #x  = self.fc1(torch.cat([back,res,col,tur],axis=1))
+        return res,col,tur
 
 
 def model_initialize(sublabel_count,DEVICE,multilabel=False):

@@ -3,3 +3,5 @@
 checkpoint/
 wandb/
 gradcam/
+gradcam_segment/
+*.pyc

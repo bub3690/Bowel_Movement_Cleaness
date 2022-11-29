@@ -61,7 +61,7 @@ def main():
     parser = argparse.ArgumentParser(description='PyTorch BMC baseline')
     parser.add_argument('--batch-size', type=int, default=32, metavar='batch',
                         help='input batch size for training (default: 32)')
-    parser.add_argument('--epochs', type=int, default=40, metavar='EPOCH',
+    parser.add_argument('--epochs', type=int, default=50, metavar='EPOCH',
                         help='number of epochs to train (default: 40)')
     parser.add_argument('--lr', type=float, default=0.0001, metavar='LR',
                         help='learning rate (default: 0.0001)')
@@ -75,12 +75,12 @@ def main():
                         help='default : res18')
     parser.add_argument('--add-seg',type=bool, default=False,
                         help='use annotations')
-    parser.add_argument('--augment',type=str,default='',help='[None,Base,Erasing,BrightnessContrast]')
+    parser.add_argument('--augment',type=str,default='',help='[None,Base,Erasing,BrightnessContrast,SunFlare]')
     parser.add_argument('--descript',type=str, default='baseline',
                             help='write descript for wandb')
     parser.add_argument('--project-name',type=str, default='BMC_vision_classification',
                             help='project name for wandb')
-    parser.add_argument('--tag',type=str,default='',help='tag for experiment')
+    parser.add_argument('--tag',type=str,nargs='+',default='',help='tag for experiment')
 
     parser.add_argument('--seed',type=int,default=1004,help='set the validation seed')
 
@@ -88,7 +88,7 @@ def main():
 
     if args.wandb:
         project_name = args.project_name
-        wandb.init(project=project_name, entity="bub3690",tags=[args.tag])
+        wandb.init(project=project_name, entity="bub3690",tags=args.tag)
         wandb_run_name = args.model+'_512x512'+args.descript+'_classification'+'_segment_'+str(args.add_seg)+'_augment_'+args.augment+'_multilabel_'+str(args.multilabel)+'_seed_'+str(args.seed)
         wandb.run.name = wandb_run_name
         wandb.run.save()
@@ -139,9 +139,9 @@ def main():
     print("검증 셋 : ",len(Y_valid_df),Counter(Y_valid_df['label']))
     print("---")
     
-    train_loader = load_dataloader(X_train,Y_train_df,sublabel,BATCH_SIZE,args.multilabel,args.augment)
-    valid_loader = load_dataloader(X_valid,Y_valid_df,sublabel,BATCH_SIZE,args.multilabel,args.augment)
-    test_loader = load_dataloader(X_valid,Y_valid_df,sublabel,BATCH_SIZE,args.multilabel,args.augment)
+    train_loader = load_dataloader(X_train,Y_train_df,sublabel,BATCH_SIZE,args.multilabel,args.augment, is_train = True)
+    valid_loader = load_dataloader(X_valid,Y_valid_df,sublabel,BATCH_SIZE,args.multilabel,args.augment, is_train = False)
+    test_loader = load_dataloader(X_valid,Y_valid_df,sublabel,BATCH_SIZE,args.multilabel,args.augment, is_train = False)
 
     
     sublabel_count=len(set(label_df[sublabel]))
@@ -149,7 +149,7 @@ def main():
     # 학습 
     check_path = './checkpoint/baseline_'+'get_'+args.sublabel+'_'+args.model+'_512_'+'segment_'+str(args.add_seg)+'_augment_'+args.augment+'_multilabel_'+str(args.multilabel)+'_seed_'+str(args.seed)+'.pt'
     print(check_path)
-    early_stopping = EarlyStopping(patience = 3, verbose = True, path=check_path)
+    early_stopping = EarlyStopping(patience = 10, verbose = True, path=check_path)
 
     best_train_acc=0 # accuracy 기록용
     best_valid_acc=0
