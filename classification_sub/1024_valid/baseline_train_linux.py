@@ -61,6 +61,8 @@ def main():
     parser = argparse.ArgumentParser(description='PyTorch BMC baseline')
     parser.add_argument('--batch-size', type=int, default=32, metavar='batch',
                         help='input batch size for training (default: 32)')
+    parser.add_argument('--num-workes', type=int, default=0, metavar='numworkers',
+                            help='dataloader multiprocess (default: 0)')          
     parser.add_argument('--epochs', type=int, default=50, metavar='EPOCH',
                         help='number of epochs to train (default: 40)')
     parser.add_argument('--lr', type=float, default=0.0001, metavar='LR',
