@@ -18,7 +18,7 @@ class ResLayer(nn.Module):
     def __init__(self,sublabel_count,DEVICE):
         super(ResLayer, self).__init__()
         self.model = models.resnet18(weights='IMAGENET1K_V1').to(DEVICE)
-        self.num_ftrs = self.model.fc.out_features
+        self.num_ftrs = self.model.fc.in_features
         
         self.model.fc = nn.Sequential(
             #nn.BatchNorm1d(self.num_ftrs+self.n_mfcc),                
@@ -36,7 +36,7 @@ class ResLayer(nn.Module):
 
     def forward(self, x):
         x  = self.model(x)
-        x  = self.fc(x)
+        # x  = self.fc(x)
         x  = F.log_softmax(x,dim=1) 
         return x
 

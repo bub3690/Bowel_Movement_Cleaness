@@ -1,10 +1,5 @@
-python baseline_train.py --batch-size 32 --epochs 40 --lr 0.0001 --sublabel label --wandb True --augment SunFlare --seed 1004 --tag sunflare_augment --project-name BMC_vision_classification
-python baseline_train.py --batch-size 32 --epochs 40 --lr 0.0001 --sublabel label --multilabel False --wandb True --augment SunFlare --seed 1005 --tag sunflare_augment --project-name BMC_vision_classification
-python baseline_train.py --batch-size 32 --epochs 40 --lr 0.0001 --sublabel label --multilabel False --wandb True --augment SunFlare --seed 1006 --tag sunflare_augment --project-name BMC_vision_classification
-python baseline_train.py --batch-size 32 --epochs 40 --lr 0.0001 --sublabel label --multilabel False --wandb True --augment SunFlare --seed 1007 --tag sunflare_augment --project-name BMC_vision_classification
-python baseline_train.py --batch-size 32 --epochs 40 --lr 0.0001 --sublabel label --multilabel False --wandb True --augment SunFlare --seed 1008 --tag sunflare_augment --project-name BMC_vision_classification
-python baseline_train.py --batch-size 32 --epochs 40 --lr 0.0001 --sublabel label --multilabel False --wandb True --augment SunFlare --seed 1009 --tag sunflare_augment --project-name BMC_vision_classification
-python baseline_train.py --batch-size 32 --epochs 40 --lr 0.0001 --sublabel label --multilabel False --wandb True --augment SunFlare --seed 1010 --tag sunflare_augment --project-name BMC_vision_classification
-python baseline_train.py --batch-size 32 --epochs 40 --lr 0.0001 --sublabel label --multilabel False --wandb True --augment SunFlare --seed 1011 --tag sunflare_augment --project-name BMC_vision_classification
-python baseline_train.py --batch-size 32 --epochs 40 --lr 0.0001 --sublabel label --multilabel False --wandb True --augment SunFlare --seed 1012 --tag sunflare_augment --project-name BMC_vision_classification
-python baseline_train.py --batch-size 32 --epochs 40 --lr 0.0001 --sublabel label --multilabel False --wandb True --augment SunFlare --seed 1013 --tag sunflare_augment --project-name BMC_vision_classification
+python baseline_train.py --batch-size 32 --epochs 40 --lr 0.0001 --sublabel label --wandb True --augment SunFlare --seed 1005 --tag sunflare_augment 1005 --project-name BMC_vision_classification
+python baseline_train.py --batch-size 32 --epochs 40 --lr 0.0001 --sublabel label --wandb True --augment SunFlare --seed 1006 --tag sunflare_augment 1006 --project-name BMC_vision_classification
+python baseline_train.py --batch-size 32 --epochs 40 --lr 0.0001 --sublabel label --wandb True --augment SunFlare --seed 1007 --tag sunflare_augment 1007 --project-name BMC_vision_classification
+python baseline_train.py --batch-size 32 --epochs 40 --lr 0.0001 --sublabel label --wandb True --augment SunFlare --seed 1008 --tag sunflare_augment 1008 --project-name BMC_vision_classification
+python baseline_train.py --batch-size 32 --epochs 40 --lr 0.0001 --sublabel label --wandb True --augment SunFlare --seed 1013 --tag sunflare_augment 1013 --project-name BMC_vision_classification

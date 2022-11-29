@@ -49,7 +49,7 @@ class BowelDataset(Dataset):
 
         return image, torch.tensor(self.label_df.iloc[idx][self.sublabel])
 
-def load_dataloader(X,Y_df,sublabel,BATCH_SIZE,multilabel,augmentation,is_train):
+def load_dataloader(X,Y_df,sublabel,BATCH_SIZE,multilabel,augmentation,is_train,num_workers=0):
     augment_transform=get_augementation(augmentation) #dictionary가 넘어온다.
 
     loader = torch.utils.data.DataLoader(dataset = 
@@ -67,7 +67,7 @@ def load_dataloader(X,Y_df,sublabel,BATCH_SIZE,multilabel,augmentation,is_train)
                                                         ),
                                             batch_size = BATCH_SIZE,
                                             shuffle = True,
-                                            num_workers=0
+                                            num_workers=num_workers
                                             ) # 순서가 암기되는것을 막기위해.
 
     return loader
