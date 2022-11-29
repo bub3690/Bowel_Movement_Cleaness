@@ -61,6 +61,8 @@ def main():
     parser = argparse.ArgumentParser(description='PyTorch BMC baseline')
     parser.add_argument('--batch-size', type=int, default=32, metavar='batch',
                         help='input batch size for training (default: 32)')
+    parser.add_argument('--num-workes', type=int, default=0, metavar='numworkers',
+                            help='dataloader multiprocess (default: 0)')                        
     parser.add_argument('--epochs', type=int, default=50, metavar='EPOCH',
                         help='number of epochs to train (default: 40)')
     parser.add_argument('--lr', type=float, default=0.0001, metavar='LR',
@@ -139,9 +141,9 @@ def main():
     print("검증 셋 : ",len(Y_valid_df),Counter(Y_valid_df['label']))
     print("---")
     
-    train_loader = load_dataloader(X_train,Y_train_df,sublabel,BATCH_SIZE,args.multilabel,args.augment, is_train = True)
-    valid_loader = load_dataloader(X_valid,Y_valid_df,sublabel,BATCH_SIZE,args.multilabel,args.augment, is_train = False)
-    test_loader = load_dataloader(X_valid,Y_valid_df,sublabel,BATCH_SIZE,args.multilabel,args.augment, is_train = False)
+    train_loader = load_dataloader(X_train,Y_train_df,sublabel,BATCH_SIZE,args.multilabel,args.augment, is_train = True,num_workers=args.num_workers)
+    valid_loader = load_dataloader(X_valid,Y_valid_df,sublabel,BATCH_SIZE,args.multilabel,args.augment, is_train = False,num_workers=args.num_workers)
+    test_loader = load_dataloader(X_valid,Y_valid_df,sublabel,BATCH_SIZE,args.multilabel,args.augment, is_train = False,num_workers=args.num_workers)
 
     
     sublabel_count=len(set(label_df[sublabel]))
