@@ -1,3 +1,4 @@
+
 python baseline_train.py --batch-size 32 --epochs 40 --lr 0.0001 --sublabel label --wandb True --augment SunFlare --seed 1005 --tag sunflare_augment 1005 --project-name BMC_vision_classification
 python baseline_train.py --batch-size 32 --epochs 40 --lr 0.0001 --sublabel label --wandb True --augment SunFlare --seed 1006 --tag sunflare_augment 1006 --project-name BMC_vision_classification
 python baseline_train.py --batch-size 32 --epochs 40 --lr 0.0001 --sublabel label --wandb True --augment SunFlare --seed 1007 --tag sunflare_augment 1007 --project-name BMC_vision_classification

@@ -71,7 +71,36 @@ class ResLayer_multilabel(nn.Module):
         x = F.log_softmax(x,dim=1)
         return x
 
-class ResLayer_multilabel_ver2(nn.Module):
+class ResLayer_multilabel_stage1(nn.Module):
+    def __init__(self,sublabel_count,DEVICE):
+        super(ResLayer_multilabel, self).__init__()
+        self.model = models.resnet18(weights='IMAGENET1K_V1').to(DEVICE)
+        self.num_ftrs = self.model.fc.out_features
+        
+        self.residue = nn.Sequential(
+                        nn.Linear(self.num_ftrs, 3),
+                    )
+
+        self.color = nn.Sequential(
+                        nn.Linear(self.num_ftrs, 3),
+                    )
+        self.turbidity = nn.Sequential(
+                        nn.Linear(self.num_ftrs, 2),
+                    )
+
+
+    def forward(self, x, sublabel):
+        
+        back = self.model(x)
+
+        res = self.residue(back)
+        col = self.color(back)
+        tur = self.turbidity(back)
+        #x  = self.fc1(torch.cat([back,res,col,tur],axis=1))
+        return res,col,tur
+
+
+class ResLayer_multilabel_stage2(nn.Module):
     def __init__(self,sublabel_count,DEVICE):
         super(ResLayer_multilabel, self).__init__()
         self.model = models.resnet18(weights='IMAGENET1K_V1').to(DEVICE)
@@ -96,7 +125,7 @@ class ResLayer_multilabel_ver2(nn.Module):
                         nn.Linear(64,50),
                         nn.BatchNorm1d(50),
                         nn.ReLU(),
-                        nn.Linear(50,3)
+                        nn.Linear(50,sublabel_count)
                     )
 
     def forward(self, x, sublabel):
@@ -106,13 +135,16 @@ class ResLayer_multilabel_ver2(nn.Module):
         res = self.residue(back)
         col = self.color(back)
         tur = self.turbidity(back)
-        #x  = self.fc1(torch.cat([back,res,col,tur],axis=1))
+
+        x  = self.fc1(torch.cat([back,res,col,tur],axis=1))
         return res,col,tur
 
 
-def model_initialize(sublabel_count,DEVICE,multilabel=False):
+def model_initialize(sublabel_count,DEVICE,multilabel=False,model_name='baseline'):
     if multilabel:
         model = ResLayer_multilabel(sublabel_count,DEVICE).to(DEVICE)
     else:
         model = ResLayer(sublabel_count,DEVICE).to(DEVICE)
+
+
     return model

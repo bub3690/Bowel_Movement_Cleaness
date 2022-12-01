@@ -49,7 +49,7 @@ from Utils.pytorchtools import EarlyStopping # 상위 폴더에 추가된 모듈
 
 # 기타 함수들
 def get_num(file_str):
-    return int(file_str.split("\\")[-1].split(".")[0])
+    return int(os.path.abspath(file_str).replace("\\","/").split("/")[-1].split(".")[0])
 
 
 
@@ -69,12 +69,12 @@ def main():
                         help='learning rate (default: 0.0001)')
     parser.add_argument('--sublabel',type=str, default='label',
                         help='select one of [color,residue,turbidity,label]')
-    parser.add_argument('--multilabel',type=bool,default=False,
-                        help="use sublabel data")                        
+    #parser.add_argument('--multilabel',type=bool,default=False,
+    #                    help="use sublabel data")                        
     parser.add_argument('--wandb',type=bool, default=False,
                         help='Use wandb log')                        
-    parser.add_argument('--model',type=str, default='res18',
-                        help='default : res18')
+    parser.add_argument('--model',type=str, default='baseline',
+                        help='default : baseline, list : [baseline,baseline_multi,sub_1stage,sub_2stage]') #1201 이거에 맞게 데이터셋, 모델, evaluate 모두 고치기
     parser.add_argument('--add-seg',type=bool, default=False,
                         help='use annotations')
     parser.add_argument('--augment',type=str,default='',help='[None,Base,Erasing,BrightnessContrast,SunFlare]')
@@ -91,7 +91,7 @@ def main():
     if args.wandb:
         project_name = args.project_name
         wandb.init(project=project_name, entity="bub3690",tags=args.tag)
-        wandb_run_name = args.model+'_512x512'+args.descript+'_classification'+'_segment_'+str(args.add_seg)+'_augment_'+args.augment+'_multilabel_'+str(args.multilabel)+'_seed_'+str(args.seed)
+        wandb_run_name = args.model+'_512x512'+args.descript+'_classification'+'_segment_'+str(args.add_seg)+'_augment_'+args.augment+'_seed_'+str(args.seed)
         wandb.run.name = wandb_run_name
         wandb.run.save()
         wandb.run.summary.update({"seed" : args.seed,"multilabel":args.multilabel,"augment":args.augment})

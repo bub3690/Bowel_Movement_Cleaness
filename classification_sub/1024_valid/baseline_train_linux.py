@@ -79,7 +79,7 @@ def main():
                         help='use annotations')
     parser.add_argument('--augment',type=str,default='',help='[None,Base,Erasing,BrightnessContrast,SunFlare]')
     parser.add_argument('--descript',type=str, default='baseline',
-                            help='write descript for wandb')
+                            help='write descript for wandb name')
     parser.add_argument('--project-name',type=str, default='BMC_vision_classification',
                             help='project name for wandb')
     parser.add_argument('--tag',type=str,nargs='+',default='',help='tag for experiment')

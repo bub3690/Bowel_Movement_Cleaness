@@ -63,7 +63,7 @@ def evaluate(model,valid_loader,criterion,DEVICE):
             #true.false값을 sum해줌. item
         valid_loss /= len(valid_loader.dataset)
         valid_accuracy = 100. * correct / len(valid_loader.dataset)
-        print("dataset 수 : ",len(valid_loader.dataset))
+        #print("dataset 수 : ",len(valid_loader.dataset))
         return valid_loss,valid_accuracy
 
 def evaluate_multilabel(model,valid_loader,criterion,DEVICE):
