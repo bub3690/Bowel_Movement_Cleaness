@@ -10,13 +10,13 @@ from .Transforms import get_augementation
 
 # # 데이터 정의
 class BowelDataset(Dataset):
-    def __init__(self, data_path_list,label_df,to_tensor,transform,sublabel,multilabel,augmentation=None,is_train=False):
+    def __init__(self, data_path_list,label_df,to_tensor,transform,sublabel,model,augmentation=None,is_train=False):
         self.data_path_list = data_path_list
         self.label_df = label_df
         self.to_tensor = to_tensor
         self.transform = transform
         self.sublabel = sublabel #sublabel : color,residue,turbidity,label
-        self.multilabel = multilabel # True or False
+        self.model = model # True or False
 
         self.torch_augmentation = augmentation['torch']
         self.album_augmentation = augmentation['album']
@@ -43,13 +43,20 @@ class BowelDataset(Dataset):
             image=self.transform(image).type(torch.float32)# 이미지 0~1 정규화
 
 
-        if self.multilabel:
+        if self.model == 'baseline_multi':
             return image, torch.tensor(self.label_df.iloc[idx][self.sublabel]), torch.tensor(self.label_df.iloc[idx][['color','residue','turbidity']]) 
-
-
+        elif self.model == 'sub_1stage':
+            return image, torch.tensor(self.label_df.iloc[idx][['color','residue','turbidity']])
+            #label 제외하고 출력
+        elif self.model == 'sub_2stage':
+            #일단 label 포함 모두 출력. 나중에 라벨 일치도를 확인하기 위해.
+            #라벨일치도 확인 위해 파일 이름도 출력
+            return image, torch.tensor(self.label_df.iloc[idx][self.sublabel]), torch.tensor(self.label_df.iloc[idx][['color','residue','turbidity']])
+        
+        #baseline
         return image, torch.tensor(self.label_df.iloc[idx][self.sublabel])
 
-def load_dataloader(X,Y_df,sublabel,BATCH_SIZE,multilabel,augmentation,is_train,num_workers=0):
+def load_dataloader(X,Y_df,sublabel,BATCH_SIZE,model,augmentation,is_train,num_workers=0):
     augment_transform=get_augementation(augmentation) #dictionary가 넘어온다.
 
     loader = torch.utils.data.DataLoader(dataset = 
@@ -61,7 +68,7 @@ def load_dataloader(X,Y_df,sublabel,BATCH_SIZE,multilabel,augmentation,is_train,
                                                                 transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
                                                             ),
                                                         sublabel=sublabel, # color,residue,turbidity, label 중 어느것을 맞추려는지 입력.
-                                                        multilabel=multilabel,
+                                                        model=model,
                                                         augmentation=augment_transform,
                                                         is_train=is_train,
                                                         ),

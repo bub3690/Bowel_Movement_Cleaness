@@ -72,10 +72,10 @@ class ResLayer_multilabel(nn.Module):
         return x
 
 class ResLayer_multilabel_stage1(nn.Module):
-    def __init__(self,sublabel_count,DEVICE):
+    def __init__(self,DEVICE):
         super(ResLayer_multilabel, self).__init__()
-        self.model = models.resnet18(weights='IMAGENET1K_V1').to(DEVICE)
-        self.num_ftrs = self.model.fc.out_features
+        self.backbone = models.resnet18(weights='IMAGENET1K_V1').to(DEVICE)
+        self.num_ftrs = self.backbone.fc.out_features
         
         self.residue = nn.Sequential(
                         nn.Linear(self.num_ftrs, 3),
@@ -89,9 +89,9 @@ class ResLayer_multilabel_stage1(nn.Module):
                     )
 
 
-    def forward(self, x, sublabel):
+    def forward(self, x):
         
-        back = self.model(x)
+        back = self.backbone(x)
 
         res = self.residue(back)
         col = self.color(back)
@@ -101,22 +101,20 @@ class ResLayer_multilabel_stage1(nn.Module):
 
 
 class ResLayer_multilabel_stage2(nn.Module):
-    def __init__(self,sublabel_count,DEVICE):
+    def __init__(self,sublabel_count,check_point,DEVICE):
         super(ResLayer_multilabel, self).__init__()
-        self.model = models.resnet18(weights='IMAGENET1K_V1').to(DEVICE)
-        self.num_ftrs = self.model.fc.out_features
+        #여기서 모델 체크포인트 읽어오기.
         
-        self.residue = nn.Sequential(
-                        nn.Linear(self.num_ftrs, 3),
-                    )
+        self.model = ResLayer_multilabel_stage1()
+        self.model.load_state_dict(torch.load(check_point))
+        #backbone freeze
 
-        self.color = nn.Sequential(
-                        nn.Linear(self.num_ftrs, 3),
-                    )
-        self.turbidity = nn.Sequential(
-                        nn.Linear(self.num_ftrs, 2),
-                    )
+        
 
+        #self.model = models.resnet18(weights='IMAGENET1K_V1').to(DEVICE)
+
+        self.num_ftrs = self.model.backbone.fc.out_features
+        
         self.fc1 = nn.Sequential(              
                         nn.Linear(self.num_ftrs + 8, 64),
                         nn.BatchNorm1d(64),
@@ -128,21 +126,26 @@ class ResLayer_multilabel_stage2(nn.Module):
                         nn.Linear(50,sublabel_count)
                     )
 
-    def forward(self, x, sublabel):
+    def forward(self, x):
         
-        back = self.model(x)
+        back = self.model.backbone(x)
 
-        res = self.residue(back)
-        col = self.color(back)
-        tur = self.turbidity(back)
+        #의문, res,col,tur는 backpropagation이 작동할까? forawrd를 통과안했는데?
+        res = self.model.residue(back)
+        col = self.model.color(back)
+        tur = self.model.turbidity(back)
 
         x  = self.fc1(torch.cat([back,res,col,tur],axis=1))
-        return res,col,tur
+        return x,res,col,tur
 
 
-def model_initialize(sublabel_count,DEVICE,multilabel=False,model_name='baseline'):
-    if multilabel:
+def model_initialize(sublabel_count,DEVICE,model_name='baseline',check_point=''):
+    if model_name == 'baseline_multi':
         model = ResLayer_multilabel(sublabel_count,DEVICE).to(DEVICE)
+    elif model_name == 'sub_1stage':
+        model = ResLayer_multilabel_stage1(DEVICE).to(DEVICE)
+    elif model_name == 'sub_2stage':
+        model = ResLayer_multilabel_stage2(sublabel_count,check_point,DEVICE).to(DEVICE)
     else:
         model = ResLayer(sublabel_count,DEVICE).to(DEVICE)
 

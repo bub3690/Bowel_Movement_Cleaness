@@ -82,6 +82,8 @@ def main():
                             help='write descript for wandb')
     parser.add_argument('--project-name',type=str, default='BMC_vision_classification',
                             help='project name for wandb')
+    parser.add_argument('--pretrained-chkpt',type=str,default='',
+                            help='pretrained model. only for 2stage learning')
     parser.add_argument('--tag',type=str,nargs='+',default='',help='tag for experiment')
 
     parser.add_argument('--seed',type=int,default=1004,help='set the validation seed')
@@ -94,7 +96,7 @@ def main():
         wandb_run_name = args.model+'_512x512'+args.descript+'_classification'+'_segment_'+str(args.add_seg)+'_augment_'+args.augment+'_seed_'+str(args.seed)
         wandb.run.name = wandb_run_name
         wandb.run.save()
-        wandb.run.summary.update({"seed" : args.seed,"multilabel":args.multilabel,"augment":args.augment})
+        wandb.run.summary.update({"seed" : args.seed,"model":args.model,"augment":args.augment})
 
     if torch.cuda.is_available():
         DEVICE = torch.device('cuda')
@@ -135,39 +137,46 @@ def main():
     # Y값 찾아오기
     Y_train_df=pd.merge(pd.DataFrame(X_train_name,columns=['file_name']),label_df,left_on='file_name',right_on='file_name',how='inner')
     Y_valid_df=pd.merge(pd.DataFrame(X_valid_name,columns=['file_name']),label_df,left_on='file_name',right_on='file_name',how='inner')
-    
+
+
     print("---")
     print("훈련 셋 : ",len(Y_train_df),Counter(Y_train_df['label']))
     print("검증 셋 : ",len(Y_valid_df),Counter(Y_valid_df['label']))
     print("---")
     
-    train_loader = load_dataloader(X_train,Y_train_df,sublabel,BATCH_SIZE,args.multilabel,args.augment, is_train = True,num_workers=args.num_workers)
-    valid_loader = load_dataloader(X_valid,Y_valid_df,sublabel,BATCH_SIZE,args.multilabel,args.augment, is_train = False,num_workers=args.num_workers)
-    test_loader = load_dataloader(X_valid,Y_valid_df,sublabel,BATCH_SIZE,args.multilabel,args.augment, is_train = False,num_workers=args.num_workers)
 
-    
-    sublabel_count=len(set(label_df[sublabel]))
-    
+    train_loader = load_dataloader(X_train, Y_train_df, sublabel, BATCH_SIZE, args.model, args.augment, is_train = True, num_workers=args.num_workers)
+    valid_loader = load_dataloader(X_valid, Y_valid_df, sublabel, BATCH_SIZE, args.model, args.augment, is_train = False, num_workers=args.num_workers)
+    test_loader = load_dataloader(X_valid, Y_valid_df, sublabel, BATCH_SIZE, args.model, args.augment, is_train = False, num_workers=args.num_workers)
+
+
+    sublabel_count = len(set(label_df[sublabel]))
+
+
     # 학습 
-    check_path = './checkpoint/baseline_'+'get_'+args.sublabel+'_'+args.model+'_512_'+'segment_'+str(args.add_seg)+'_augment_'+args.augment+'_multilabel_'+str(args.multilabel)+'_seed_'+str(args.seed)+'.pt'
+    check_path = './checkpoint/'+args.model+'_get_'+args.sublabel+'_512_'+'segment_'+str(args.add_seg)+'_augment_'+args.augment+'_seed_'+str(args.seed)+'.pt'
     print(check_path)
     early_stopping = EarlyStopping(patience = 10, verbose = True, path=check_path)
 
-    best_train_acc=0 # accuracy 기록용
-    best_valid_acc=0
+    best_train_acc = 0 # accuracy 기록용
+    best_valid_acc = 0
 
-    model=model_initialize(sublabel_count,DEVICE,args.multilabel)
+    model = model_initialize(sublabel_count, DEVICE, model_name=args.model, check_point=args.pretrained_chkpt)
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(),lr=lr)
 
 
     print("학습 시작")
     for Epoch in range(1,EPOCHS+1):
-        if args.multilabel:
-            train_loss,train_accuracy = train_multilabel(model,train_loader,optimizer,criterion,DEVICE)
-            valid_loss,valid_accuracy = evaluate_multilabel(model, valid_loader,criterion,DEVICE)            
+        ## 12.02 여기 고치던 중
+        # evaludate 손보고, 2stage 고치기. testevaluate도 빠지지 않게 고치기 
+        if args.model == 'sub_1stage':
+            train_loss,train_res_acc,train_col_acc,train_tur_acc = \
+                 train(model,train_loader,optimizer,criterion,DEVICE,model_name=args.model)
+            
+            valid_loss,valid_accuracy = evaluate(model, valid_loader,criterion,DEVICE)
         else:
-            train_loss,train_accuracy = train(model,train_loader,optimizer,criterion,DEVICE)
+            train_loss,train_accuracy = train(model,train_loader,optimizer,criterion,DEVICE,model_name=args.model)
             valid_loss,valid_accuracy = evaluate(model, valid_loader,criterion,DEVICE)
 
         print("\n[EPOCH:{}]\t Train Loss:{:.4f}\t Train Acc:{:.2f} %  | \tValid Loss:{:.4f} \tValid Acc: {:.2f} %\n".
@@ -194,19 +203,19 @@ def main():
                 #valid_accs.append(best_valid_acc)
                 print("Early stopping")
                 break
-
+        
         if Epoch==EPOCHS:
             #만약 early stop 없이 40 epoch라서 중지 된 경우.
             print(EPOCHS," Stop") 
             pass
-    
+
 
     print("train ACC : {:.4f} |\t valid ACC: {:.4f} ".format(best_train_acc,best_valid_acc ))
 
     # Confusion matrix (resnet18)
     # 모델을 각각 불러와서 test set을 평가한다.
 
-    model=model_initialize(sublabel_count,DEVICE,args.multilabel)
+    model = model_initialize(sublabel_count, DEVICE, model_name=args.model, check_point=args.pretrained_chkpt)
     criterion = nn.CrossEntropyLoss()
     model.load_state_dict(torch.load(check_path))
 
