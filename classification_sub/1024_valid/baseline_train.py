@@ -1,7 +1,7 @@
 # # baseline
 # 
 # - classification baseline code
-# 사용법: python baseline_train.py --batch-size 32 --epochs 40 --lr 0.0001 --sublabel label --multilabel True --augment None --wandb True --seed 1004 --tag baseline_multi --project-name BMC_vision_classification
+# 사용법: python baseline_train.py --batch-size 32 --epochs 40 --lr 0.0001 --sublabel label --augment None --wandb True --seed 1004 --tag baseline_multi --project-name BMC_vision_classification
 # 
 # 
 
@@ -33,9 +33,7 @@ import wandb
 
 #Modules
 from Model.Models import model_initialize
-from Trainer.Trainer import train,train_multilabel,\
-    evaluate,test_evaluate,\
-    test_evaluate_multilabel,evaluate_multilabel
+from Trainer.Trainer import train,evaluate,test_evaluate
 from Dataset.Dataset import load_dataloader
 
 ##
@@ -173,14 +171,33 @@ def main():
         if args.model == 'sub_1stage':
             train_loss,train_res_acc,train_col_acc,train_tur_acc = \
                  train(model,train_loader,optimizer,criterion,DEVICE,model_name=args.model)
+            valid_loss,valid_res_acc,valid_col_acc,valid_tur_acc = \
+            evaluate(model, valid_loader,criterion,DEVICE,model_name=args.model)
             
-            valid_loss,valid_accuracy = evaluate(model, valid_loader,criterion,DEVICE)
+            train_accuracy = (train_res_acc+train_col_acc+train_tur_acc)/3
+            valid_accuracy = (valid_res_acc+valid_col_acc+valid_tur_acc)/3
+
+
+            print("\n[EPOCH:{}]\t Train Loss:{:.4f}\t Train resid Acc:{:.2f} % \t Train col Acc:{:.2f} \t Train tur Acc:{:.2f}".
+                format(Epoch,train_loss,train_res_acc,train_col_acc,train_tur_acc))
+            print("[EPOCH:{}]\t Valid Loss:{:.4f} \t Valid resid Acc:{:.2f} % \t Valid col Acc:{:.2f} \t Valid tur Acc:{:.2f} %\n".
+                format(Epoch,valid_loss,valid_res_acc,valid_col_acc,valid_tur_acc))
+        elif args.model == 'sub_2stage':
+            train_loss,train_accuracy,train_res_acc,train_col_acc,train_tur_acc = \
+                 train(model,train_loader,optimizer,criterion,DEVICE,model_name=args.model)
+            valid_loss,valid_accuracy,valid_res_acc,valid_col_acc,valid_tur_acc = \
+            evaluate(model, valid_loader,criterion,DEVICE,model_name=args.model)
+
+            print("\n[EPOCH:{}]\t Train Loss:{:.4f}\t Train Acc:{:.2f} % \tTrain resid Acc:{:.2f} % \t Train col Acc:{:.2f} \t Train tur Acc:{:.2f}".
+                format(Epoch,train_loss,train_accuracy,train_res_acc,train_col_acc,train_tur_acc))
+            print("Valid Loss:{:.4f} \t  Valid Acc:{:.2f} % \tValid resid Acc:{:.2f} % \t Valid col Acc:{:.2f} \t Valid tur Acc:{:.2f} %\n".
+                format(valid_loss,valid_accuracy,valid_res_acc,valid_col_acc,valid_tur_acc))
         else:
             train_loss,train_accuracy = train(model,train_loader,optimizer,criterion,DEVICE,model_name=args.model)
-            valid_loss,valid_accuracy = evaluate(model, valid_loader,criterion,DEVICE)
+            valid_loss,valid_accuracy = evaluate(model, valid_loader,criterion,DEVICE,model_name=args.model)
 
-        print("\n[EPOCH:{}]\t Train Loss:{:.4f}\t Train Acc:{:.2f} %  | \tValid Loss:{:.4f} \tValid Acc: {:.2f} %\n".
-            format(Epoch,train_loss,train_accuracy,valid_loss,valid_accuracy))
+            print("\n[EPOCH:{}]\t Train Loss:{:.4f}\t Train Acc:{:.2f} %  | \tValid Loss:{:.4f} \tValid Acc: {:.2f} %\n".
+                format(Epoch,train_loss,train_accuracy,valid_loss,valid_accuracy))
 
         if args.wandb:
             wandb.log({
@@ -197,6 +214,10 @@ def main():
             if args.wandb:
                 wandb.run.summary.update({"best_valid_acc" : best_valid_acc,
                                          "best_valid_loss" : valid_loss})
+                if args.model == 'sub_1stage':
+                    wandb.run.summary.update({"best_residue_acc" : valid_res_acc,
+                                             "best_residue_acc" : valid_col_acc,
+                                             "best_residue_acc" : valid_tur_acc})                    
 
         if early_stopping.early_stop:
                 #train_accs.append(best_train_acc)
@@ -219,10 +240,13 @@ def main():
     criterion = nn.CrossEntropyLoss()
     model.load_state_dict(torch.load(check_path))
 
-    if args.multilabel:
-        predictions,answers,test_loss = test_evaluate_multilabel(model, test_loader,criterion,DEVICE)
+    if args.model == 'sub_1stage':
+        #test 따로 미실시.
+        return
+    elif args.model == 'sub_2stage':
+        predictions,prediction_res,prediction_col,prediction_tur,answers,answers_res,answers_col,answers_tur,test_loss = test_evaluate(model, test_loader,criterion,DEVICE,args.model_name)
     else:
-        predictions,answers,test_loss = test_evaluate(model, test_loader,criterion,DEVICE)
+        predictions,answers,test_loss = test_evaluate(model, test_loader,criterion,DEVICE,args.model_name)
     predictions=[ dat.cpu().numpy() for dat in predictions]
     answers=[ dat.cpu().numpy() for dat in answers]
 

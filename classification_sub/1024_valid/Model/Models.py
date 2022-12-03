@@ -73,7 +73,7 @@ class ResLayer_multilabel(nn.Module):
 
 class ResLayer_multilabel_stage1(nn.Module):
     def __init__(self,DEVICE):
-        super(ResLayer_multilabel, self).__init__()
+        super(ResLayer_multilabel_stage1, self).__init__()
         self.backbone = models.resnet18(weights='IMAGENET1K_V1').to(DEVICE)
         self.num_ftrs = self.backbone.fc.out_features
         
@@ -101,11 +101,11 @@ class ResLayer_multilabel_stage1(nn.Module):
 
 
 class ResLayer_multilabel_stage2(nn.Module):
-    def __init__(self,sublabel_count,check_point,DEVICE):
-        super(ResLayer_multilabel, self).__init__()
+    def __init__(self,sublabel_count,DEVICE,check_point):
+        super(ResLayer_multilabel_stage2, self).__init__()
         #여기서 모델 체크포인트 읽어오기.
         
-        self.model = ResLayer_multilabel_stage1()
+        self.model = ResLayer_multilabel_stage1(DEVICE).to(DEVICE)
         self.model.load_state_dict(torch.load(check_point))
         #backbone freeze
 
@@ -130,7 +130,8 @@ class ResLayer_multilabel_stage2(nn.Module):
         
         back = self.model.backbone(x)
 
-        #의문, res,col,tur는 backpropagation이 작동할까? forawrd를 통과안했는데?
+        #의문, res,col,tur는 backpropagation이 작동할까? forawrd를 통과안했는데? 안될것으로 추정.
+        
         res = self.model.residue(back)
         col = self.model.color(back)
         tur = self.model.turbidity(back)
@@ -140,12 +141,13 @@ class ResLayer_multilabel_stage2(nn.Module):
 
 
 def model_initialize(sublabel_count,DEVICE,model_name='baseline',check_point=''):
+    #import pdb;pdb.set_trace()
     if model_name == 'baseline_multi':
         model = ResLayer_multilabel(sublabel_count,DEVICE).to(DEVICE)
     elif model_name == 'sub_1stage':
         model = ResLayer_multilabel_stage1(DEVICE).to(DEVICE)
     elif model_name == 'sub_2stage':
-        model = ResLayer_multilabel_stage2(sublabel_count,check_point,DEVICE).to(DEVICE)
+        model = ResLayer_multilabel_stage2(sublabel_count,DEVICE,check_point).to(DEVICE)
     else:
         model = ResLayer(sublabel_count,DEVICE).to(DEVICE)
 
