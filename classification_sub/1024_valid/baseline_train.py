@@ -90,6 +90,7 @@ def main():
 
     if args.wandb:
         project_name = args.project_name
+        wandb.login(key='9b0830eae021991e53eaabb9bb697d9efef8fd58')
         wandb.init(project=project_name, entity="bub3690",tags=args.tag)
         wandb_run_name = args.model+'_512x512'+args.descript+'_classification'+'_segment_'+str(args.add_seg)+'_augment_'+args.augment+'_seed_'+str(args.seed)
         wandb.run.name = wandb_run_name
