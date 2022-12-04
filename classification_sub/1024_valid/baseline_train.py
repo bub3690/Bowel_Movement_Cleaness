@@ -190,8 +190,8 @@ def main():
 
             print("\n[EPOCH:{}]\t Train Loss:{:.4f}\t Train Acc:{:.2f} % \tTrain resid Acc:{:.2f} % \t Train col Acc:{:.2f} \t Train tur Acc:{:.2f}".
                 format(Epoch,train_loss,train_accuracy,train_res_acc,train_col_acc,train_tur_acc))
-            print("Valid Loss:{:.4f} \t  Valid Acc:{:.2f} % \tValid resid Acc:{:.2f} % \t Valid col Acc:{:.2f} \t Valid tur Acc:{:.2f} %\n".
-                format(valid_loss,valid_accuracy,valid_res_acc,valid_col_acc,valid_tur_acc))
+            print("[EPOCH:{}]\tValid Loss:{:.4f} \t  Valid Acc:{:.2f} % \tValid resid Acc:{:.2f} % \t Valid col Acc:{:.2f} \t Valid tur Acc:{:.2f} %\n".
+                format(Epoch,valid_loss,valid_accuracy,valid_res_acc,valid_col_acc,valid_tur_acc))
         else:
             train_loss,train_accuracy = train(model,train_loader,optimizer,criterion,DEVICE,model_name=args.model)
             valid_loss,valid_accuracy = evaluate(model, valid_loader,criterion,DEVICE,model_name=args.model)
@@ -212,13 +212,15 @@ def main():
         if -early_stopping.best_score == valid_loss:
             best_train_acc, best_valid_acc = train_accuracy,valid_accuracy
             if args.wandb:
-                wandb.run.summary.update({"best_valid_acc" : best_valid_acc,
-                                         "best_valid_loss" : valid_loss})
                 if args.model == 'sub_1stage':
-                    wandb.run.summary.update({"best_residue_acc" : valid_res_acc,
+                    wandb.run.summary.update({"best_valid_acc" : best_valid_acc,
+                                             "best_residue_acc" : valid_res_acc,
+                                             "best_valid_loss" : valid_loss,
                                              "best_residue_acc" : valid_col_acc,
-                                             "best_residue_acc" : valid_tur_acc})                    
-
+                                             "best_residue_acc" : valid_tur_acc})
+                else:
+                    wandb.run.summary.update({"best_valid_acc" : best_valid_acc,
+                                              "best_valid_loss" : valid_loss})
         if early_stopping.early_stop:
                 #train_accs.append(best_train_acc)
                 #valid_accs.append(best_valid_acc)
@@ -244,9 +246,9 @@ def main():
         #test 따로 미실시.
         return
     elif args.model == 'sub_2stage':
-        predictions,prediction_res,prediction_col,prediction_tur,answers,answers_res,answers_col,answers_tur,test_loss = test_evaluate(model, test_loader,criterion,DEVICE,args.model_name)
+        predictions,prediction_res,prediction_col,prediction_tur,answers,answers_res,answers_col,answers_tur,test_loss = test_evaluate(model, test_loader,criterion,DEVICE,args.model)
     else:
-        predictions,answers,test_loss = test_evaluate(model, test_loader,criterion,DEVICE,args.model_name)
+        predictions,answers,test_loss = test_evaluate(model, test_loader,criterion,DEVICE,args.model)
     predictions=[ dat.cpu().numpy() for dat in predictions]
     answers=[ dat.cpu().numpy() for dat in answers]
 
