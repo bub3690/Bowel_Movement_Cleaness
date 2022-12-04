@@ -95,7 +95,7 @@ def main():
         wandb_run_name = args.model+'_512x512'+args.descript+'_classification'+'_segment_'+str(args.add_seg)+'_augment_'+args.augment+'_seed_'+str(args.seed)
         wandb.run.name = wandb_run_name
         wandb.run.save()
-        wandb.run.summary.update({"seed" : args.seed,"model":args.model,"augment":args.augment})
+        wandb.run.summary.update({"seed" : args.seed,"model":args.model,"augment":args.augment,"descript":args.descript})
 
     if torch.cuda.is_available():
         DEVICE = torch.device('cuda')
@@ -213,12 +213,12 @@ def main():
         if -early_stopping.best_score == valid_loss:
             best_train_acc, best_valid_acc = train_accuracy,valid_accuracy
             if args.wandb:
-                if args.model == 'sub_1stage':
+                if args.model == 'sub_1stage' or args.model == 'sub_2stage':
                     wandb.run.summary.update({"best_valid_acc" : best_valid_acc,
-                                             "best_residue_acc" : valid_res_acc,
                                              "best_valid_loss" : valid_loss,
-                                             "best_residue_acc" : valid_col_acc,
-                                             "best_residue_acc" : valid_tur_acc})
+                                             "best_residue_acc" : valid_res_acc,                                             
+                                             "best_color_acc" : valid_col_acc,
+                                             "best_tur_acc" : valid_tur_acc})
                 else:
                     wandb.run.summary.update({"best_valid_acc" : best_valid_acc,
                                               "best_valid_loss" : valid_loss})

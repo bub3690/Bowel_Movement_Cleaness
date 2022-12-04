@@ -108,7 +108,7 @@ class ResLayer_multilabel_stage2(nn.Module):
         self.model = ResLayer_multilabel_stage1(DEVICE).to(DEVICE)
         self.model.load_state_dict(torch.load(check_point))
         #backbone freeze
-
+        self.model.backbone.weight.requires_grad = False
         
 
         #self.model = models.resnet18(weights='IMAGENET1K_V1').to(DEVICE)
