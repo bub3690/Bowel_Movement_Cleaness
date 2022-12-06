@@ -83,6 +83,7 @@ def main():
     parser.add_argument('--pretrained-chkpt',type=str,default='',
                             help='pretrained model. only for 2stage learning')
     parser.add_argument('--tag',type=str,nargs='+',default='',help='tag for experiment')
+    parser.add_argument('--name',type=str,default='baseline',help='모델에 관한 간단한 추가 설명')
 
     parser.add_argument('--seed',type=int,default=1004,help='set the validation seed')
 
@@ -92,7 +93,7 @@ def main():
         project_name = args.project_name
         wandb.login(key='9b0830eae021991e53eaabb9bb697d9efef8fd58')
         wandb.init(project=project_name, entity="bub3690",tags=args.tag)
-        wandb_run_name = args.model+'_512x512'+args.descript+'_classification'+'_segment_'+str(args.add_seg)+'_augment_'+args.augment+'_seed_'+str(args.seed)
+        wandb_run_name = args.model+'_512x512_'+args.name+'_classification'+'_segment_'+str(args.add_seg)+'_augment_'+args.augment+'_seed_'+str(args.seed)
         wandb.run.name = wandb_run_name
         wandb.run.save()
         wandb.run.summary.update({"seed" : args.seed,"model":args.model,"augment":args.augment,"descript":args.descript})
@@ -153,7 +154,7 @@ def main():
 
 
     # 학습 
-    check_path = './checkpoint/'+args.model+'_get_'+args.sublabel+'_512_'+'segment_'+str(args.add_seg)+'_augment_'+args.augment+'_seed_'+str(args.seed)+'.pt'
+    check_path = './checkpoint/'+args.model+'_get_'+args.sublabel+'_512_'+args.name+'_segment_'+str(args.add_seg)+'_augment_'+args.augment+'_seed_'+str(args.seed)+'.pt'
     print(check_path)
     early_stopping = EarlyStopping(patience = 10, verbose = True, path=check_path)
 
