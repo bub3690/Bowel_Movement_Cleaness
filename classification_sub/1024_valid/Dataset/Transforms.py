@@ -13,6 +13,11 @@ def get_augementation(augmentation):
         augment_dict['torch'] = transforms.Compose([
             transforms.RandomErasing(p=0.4),
         ])
+    elif augmentation =='Flip':
+        augment_dict['album'] = A.Compose([
+            A.HorizontalFlip(p=0.3),
+            A.VerticalFlip(p=0.3),
+            ])
     elif augmentation == 'Erase':
         augment_dict['torch'] = transforms.Compose([
             transforms.RandomErasing(p=0.4),
