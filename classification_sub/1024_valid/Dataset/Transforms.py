@@ -18,6 +18,7 @@ def get_augementation(augmentation):
             A.HorizontalFlip(p=0.3),
             A.VerticalFlip(p=0.3),
             ])
+        augment_dict['torch'] = None
     elif augmentation == 'Erase':
         augment_dict['torch'] = transforms.Compose([
             transforms.RandomErasing(p=0.4),
