@@ -70,9 +70,7 @@ def get_augementation(augmentation):
                                             A.RandomBrightnessContrast(brightness_limit=(-0.2,0.3),p=0.4),
                                             A.RandomShadow(shadow_roi=(0,0,1,1),shadow_dimension=6,p=0.3),                                                             
             ])
-        augment_dict['torch'] = transforms.Compose([
-            transforms.RandomErasing(p=0.2),
-        ])
+        augment_dict['torch'] = None
     else:
         # None
         augment_dict['album'] = None
