@@ -21,9 +21,10 @@ def get_augementation(augmentation):
         augment_dict['torch'] = None
     elif augmentation == 'Erase':
         augment_dict['torch'] = transforms.Compose([
-            transforms.RandomErasing(p=0.3),
+            transforms.RandomErasing(p=0.3,scale=(0.02, 0.15),value=255),
         ])
         augment_dict['album'] = None
+
     elif augmentation == 'RandomShadow':
         augment_dict['album'] = A.Compose([
                 A.RandomShadow(shadow_roi=(0,0,1,1),shadow_dimension=6,p=0.3),
@@ -48,9 +49,30 @@ def get_augementation(augmentation):
                                                                 src_color,
                                                                 p=0.5),
             ])
-        augment_dict['torch'] = None
-
-
+        augment_dict['torch'] = transforms.Compose([
+            transforms.RandomErasing(p=0.3,scale=(0.02, 0.15),value=255),
+        ])
+    elif augmentation == "GoodAugmentations":
+        flare_roi=(0, 0, 1, 0.5) # 맺힐 영역
+        angle_lower=0 #원의 정도
+        angle_upper=1
+        num_flare_circles_lower=1 #원의 수
+        num_flare_circles_upper=2
+        src_radius=300
+        src_color=(255, 255, 255)
+        augment_dict['album'] = A.Compose([A.RandomSunFlare(flare_roi, angle_lower, angle_upper,
+                                                                num_flare_circles_lower,num_flare_circles_upper,
+                                                                src_radius,
+                                                                src_color,
+                                                                p=0.5),
+                                            A.HorizontalFlip(p=0.3),
+                                            A.VerticalFlip(p=0.3),
+                                            A.RandomBrightnessContrast(brightness_limit=(-0.2,0.3),p=0.4),
+                                            A.RandomShadow(shadow_roi=(0,0,1,1),shadow_dimension=6,p=0.3),                                                             
+            ])
+        augment_dict['torch'] = transforms.Compose([
+            transforms.RandomErasing(p=0.2),
+        ])
     else:
         # None
         augment_dict['album'] = None

@@ -72,7 +72,7 @@ def main():
     parser.add_argument('--wandb',type=bool, default=False,
                         help='Use wandb log')                        
     parser.add_argument('--model',type=str, default='baseline',
-                        help='default : baseline, list : [baseline,baseline_multi,sub_1stage,sub_2stage]') #1201 이거에 맞게 데이터셋, 모델, evaluate 모두 고치기
+                        help='default : baseline, list : [baseline,baseline_multi,sub_1stage,sub_2stage,GoodAugmentations]') #1201 이거에 맞게 데이터셋, 모델, evaluate 모두 고치기
     parser.add_argument('--add-seg',type=bool, default=False,
                         help='use annotations')
     parser.add_argument('--augment',type=str,default='',help='[None,Base,Erasing,RandomShadow,Flip,BrightnessContrast,SunFlare]')
