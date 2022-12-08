@@ -24,10 +24,14 @@ def get_augementation(augmentation):
             transforms.RandomErasing(p=0.4),
         ])
         augment_dict['album'] = None
-
+    elif augmentation == 'RandomShadow':
+        augment_dict['album'] = A.Compose([
+                A.RandomShadow(shadow_roi=(0,0,1,1),shadow_dimension=6,p=0.3),
+            ])
+        augment_dict['torch'] = None        
     elif augmentation == 'BrightnessContrast':
         augment_dict['album'] = A.Compose([
-            A.RandomBrightnessContrast(p=0.5),
+            A.RandomBrightnessContrast(brightness_limit=(-0.2,0.3),p=0.4),
             ])
         augment_dict['torch'] = None
     elif augmentation == "SunFlare":
