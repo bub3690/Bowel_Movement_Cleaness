@@ -21,7 +21,7 @@ def get_augementation(augmentation):
         augment_dict['torch'] = None
     elif augmentation == 'Erase':
         augment_dict['torch'] = transforms.Compose([
-            transforms.RandomErasing(p=0.4),
+            transforms.RandomErasing(p=0.3),
         ])
         augment_dict['album'] = None
     elif augmentation == 'RandomShadow':
