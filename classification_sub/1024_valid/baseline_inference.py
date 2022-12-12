@@ -143,7 +143,7 @@ def main():
     print("테스트 셋 : ",len(Y_test_df),Counter(Y_test_df['label']))
     print("---")
     
-    test_loader = load_dataloader(X_test_name, Y_test_df, sublabel, BATCH_SIZE, args.model, args.augment, is_train = False, num_workers=args.num_workers)
+    test_loader = load_dataloader(X_images, Y_test_df, sublabel, BATCH_SIZE, args.model, args.augment, is_train = False, num_workers=args.num_workers)
 
 
     sublabel_count = len(set(label_df[sublabel]))
