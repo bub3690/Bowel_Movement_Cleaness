@@ -119,17 +119,20 @@ def main():
 
 
     if args.add_seg==False:
-        X_images = glob('../../data/bmc_label_voc/JPEGImages/*.jpg')
+        X_images = glob('../../data/bmc_label_until-10-preprocess/*.jpg')
         X_train, X_valid = train_test_split(X_images, test_size=0.2,random_state=args.seed)
+        X_valid, X_test = train_test_split(X_valid, test_size=0.66,random_state=args.seed)
     else:
         X_mask = glob('../../data/bmc_label_voc/SegmentationMaskedJPG/*.jpg') # 수정 필요.
-        X_train, X_valid = train_test_split(X_mask, test_size=0.2,random_state=1004)
+        X_train, X_valid = train_test_split(X_mask, test_size=0.2,random_state=args.seed)
+        X_valid, X_test = train_test_split(X_valid, test_size=0.2,random_state=args.seed)
 
     X_train_name = list(map(get_num,X_train))
     X_valid_name = list(map(get_num,X_valid))
+    X_test_name = list(map(get_num,X_test))
 
     #첫번째 열 이름 바꿔주기
-    label_df = pd.read_csv('../../bmc.csv')
+    label_df = pd.read_csv('../../bmc_until10_preprocess.csv')
     column_names = list(label_df.columns)
     column_names[0] = 'file_name'
     label_df.columns = column_names
@@ -137,17 +140,19 @@ def main():
     # Y값 찾아오기
     Y_train_df=pd.merge(pd.DataFrame(X_train_name,columns=['file_name']),label_df,left_on='file_name',right_on='file_name',how='inner')
     Y_valid_df=pd.merge(pd.DataFrame(X_valid_name,columns=['file_name']),label_df,left_on='file_name',right_on='file_name',how='inner')
+    Y_test_df=pd.merge(pd.DataFrame(X_test_name,columns=['file_name']),label_df,left_on='file_name',right_on='file_name',how='inner')
 
 
     print("---")
     print("훈련 셋 : ",len(Y_train_df),Counter(Y_train_df['label']))
     print("검증 셋 : ",len(Y_valid_df),Counter(Y_valid_df['label']))
+    print("테스트 셋 : ",len(Y_test_df),Counter(Y_test_df['label']))
     print("---")
     
 
     train_loader = load_dataloader(X_train, Y_train_df, sublabel, BATCH_SIZE, args.model, args.augment, is_train = True, num_workers=args.num_workers)
     valid_loader = load_dataloader(X_valid, Y_valid_df, sublabel, BATCH_SIZE, args.model, args.augment, is_train = False, num_workers=args.num_workers)
-    test_loader = load_dataloader(X_valid, Y_valid_df, sublabel, BATCH_SIZE, args.model, args.augment, is_train = False, num_workers=args.num_workers)
+    test_loader  = load_dataloader(X_test, Y_test_df, sublabel, BATCH_SIZE, args.model, args.augment, is_train = False, num_workers=args.num_workers)
 
 
     sublabel_count = len(set(label_df[sublabel]))
@@ -249,23 +254,49 @@ def main():
         return
     elif args.model == 'sub_2stage':
         predictions,prediction_res,prediction_col,prediction_tur,answers,answers_res,answers_col,answers_tur,test_loss = test_evaluate(model, test_loader,criterion,DEVICE,args.model)
+        predictions=[ dat.cpu().numpy() for dat in predictions]
+        answers=[ dat.cpu().numpy() for dat in answers]
+
+        cf = confusion_matrix(answers, predictions)
+
+        #fscroe macro추가
+        fscore = f1_score(answers,predictions,average='macro')
+        acc = accuracy_score(answers,predictions)
+
+        res_acc = accuracy_score(answers_res,prediction_res)
+        col_acc = accuracy_score(answers_col,prediction_col)
+        tur_acc = accuracy_score(answers_tur,prediction_tur)
+
+        wandb.run.summary.update({"test acc" : acc*100,
+                                "test res_acc" : res_acc*100,
+                                "test color_acc" : col_acc*100,
+                                "test tur_acc" : tur_acc*100,
+                                "test f1" : fscore})
+
+        print("Accuracy : {:.4f}% ".format(acc*100))
+        print("Resiude Accuracy : {:.4f}% ".format(res_acc*100))
+        print("Color Accuracy : {:.4f}% ".format(col_acc*100))
+        print("Turbidity Accuracy : {:.4f}% ".format(tur_acc*100))
+        print("f score : {:.4f} ".format(fscore))
+        print(cf)
+        print("-----")    
     else:
         predictions,answers,test_loss = test_evaluate(model, test_loader,criterion,DEVICE,args.model)
-    predictions=[ dat.cpu().numpy() for dat in predictions]
-    answers=[ dat.cpu().numpy() for dat in answers]
+        predictions=[ dat.cpu().numpy() for dat in predictions]
+        answers=[ dat.cpu().numpy() for dat in answers]
 
-    cf = confusion_matrix(answers, predictions)
+        cf = confusion_matrix(answers, predictions)
 
-    #fscroe macro추가
-    fscore = f1_score(answers,predictions,average='macro')
-    acc = accuracy_score(answers,predictions)
-    wandb.run.summary.update({"last valid_acc" : acc*100,
-                              "last valid_f1" : fscore})
+        #fscroe macro추가
+        fscore = f1_score(answers,predictions,average='macro')
+        acc = accuracy_score(answers,predictions)
+        wandb.run.summary.update({"last valid_acc" : acc*100,
+                                "last valid_f1" : fscore})
 
-    print("Accuracy : {:.4f}% ".format(acc*100))
-    print("f score : {:.4f} ".format(fscore))
-    print(cf)
-    print("-----")                        
+        print("Accuracy : {:.4f}% ".format(acc*100))
+        print("f score : {:.4f} ".format(fscore))
+        print(cf)
+        print("-----")                        
     return
 
 
