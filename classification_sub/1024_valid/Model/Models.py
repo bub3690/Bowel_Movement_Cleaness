@@ -188,13 +188,16 @@ class ResLayer_multilabel_stage2(nn.Module):
         #여기서 모델 체크포인트 읽어오기.
         
         self.model = ResLayer_multilabel_stage1(DEVICE).to(DEVICE)
-        self.model.load_state_dict(torch.load(check_point))
+        if check_point != '':
+            self.model.load_state_dict(torch.load(check_point))
 
         for param in self.model.parameters():
             param.requires_grad = False
 
         self.model_2stage = ResLayer_multilabel_stage1(DEVICE).to(DEVICE)
-        self.model_2stage.load_state_dict(torch.load(check_point))
+
+        if check_point != '':
+            self.model_2stage.load_state_dict(torch.load(check_point))
 
         #head freeze    
 
@@ -218,6 +221,7 @@ class ResLayer_multilabel_stage2(nn.Module):
         back = self.model.backbone(x)
 
         #의문, res,col,tur는 backpropagation이 작동할까? forawrd를 통과안했는데? 안될것으로 추정.
+        # freeze를 안할시, 학습이 같이 된다. 
         
         res = self.model.residue(back)
         col = self.model.color(back)
