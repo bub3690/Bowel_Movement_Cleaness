@@ -254,6 +254,11 @@ def test_evaluate(model,test_loader,criterion,DEVICE,model_name='baseline'):
         answers_res = []
         answers_col = []
         answers_tur = []
+
+        prediction_res = []
+        prediction_col = []
+        prediction_tur = []
+
         for batch_idx,(image,label,sublabel) in tqdm(enumerate(test_loader)):
             image = image.to(DEVICE)
             label = label.to(DEVICE)
@@ -274,9 +279,9 @@ def test_evaluate(model,test_loader,criterion,DEVICE,model_name='baseline'):
             
             # 결과 확인용
             predictions +=prediction
-            prediction_res = res.max(1,keepdim=True)[1] # 가장 확률이 높은 class 1개를 가져온다.그리고 인덱스만
-            prediction_col = col.max(1,keepdim=True)[1] # 가장 확률이 높은 class 1개를 가져온다.그리고 인덱스만
-            prediction_tur = tur.max(1,keepdim=True)[1] # 가장 확률이 높은 class 1개를 가져온다.그리고 인덱스만
+            prediction_res += res.max(1,keepdim=True)[1] # 가장 확률이 높은 class 1개를 가져온다.그리고 인덱스만
+            prediction_col += col.max(1,keepdim=True)[1] # 가장 확률이 높은 class 1개를 가져온다.그리고 인덱스만
+            prediction_tur += tur.max(1,keepdim=True)[1] # 가장 확률이 높은 class 1개를 가져온다.그리고 인덱스만
         test_loss/=data_length
         return predictions,prediction_res,prediction_col,prediction_tur, answers,answers_res,answers_col,answers_tur,test_loss
     else:
