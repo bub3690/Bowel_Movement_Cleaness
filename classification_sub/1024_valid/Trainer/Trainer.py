@@ -66,7 +66,7 @@ def train(model,train_loader,optimizer,criterion,DEVICE,model_name='baseline'):
         train_color_accuracy = 100. * correct_col / data_length
         train_turbidity_accuracy = 100. * correct_tur / data_length
         return train_loss,train_residue_accuracy,train_color_accuracy,train_turbidity_accuracy
-    elif model_name == 'sub_2stage':
+    elif 'sub_2stage' in model_name:
         correct_res = 0
         correct_col = 0
         correct_tur = 0
@@ -179,7 +179,7 @@ def evaluate(model,valid_loader,criterion,DEVICE,model_name='baseline'):
         valid_color_accuracy = 100. * correct_col / data_length
         valid_turbidity_accuracy = 100. * correct_tur / data_length
         return valid_loss,valid_residue_accuracy,valid_color_accuracy,valid_turbidity_accuracy
-    elif model_name == "sub_2stage":
+    elif 'sub_2stage' in model_name:
         correct_res = 0
         correct_col = 0
         correct_tur = 0
