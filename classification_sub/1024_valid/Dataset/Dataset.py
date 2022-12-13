@@ -48,7 +48,7 @@ class BowelDataset(Dataset):
         elif self.model == 'sub_1stage':
             return image, torch.tensor(self.label_df.iloc[idx][['color','residue','turbidity']])
             #label 제외하고 출력
-        elif self.model == 'sub_2stage':
+        elif "sub_2stage" in self.model :
             #일단 label 포함 모두 출력. 나중에 라벨 일치도를 확인하기 위해.
             #라벨일치도 확인 위해 파일 이름도 출력
             return image, torch.tensor(self.label_df.iloc[idx][self.sublabel]), torch.tensor(self.label_df.iloc[idx][['color','residue','turbidity']])

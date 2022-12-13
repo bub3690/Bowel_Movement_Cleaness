@@ -6,14 +6,18 @@
 ./checkpoint/sub_1stage_get_label_512_1stage_SunFlare_segment_False_augment_SunFlare_seed_1004.pt
 
 1 stage augmentation Erase
+./checkpoint/sub_1stage_get_label_512_1stage_Erase_segment_False_augment_Erase_seed_1004.pt
 
 
 1 stage augmentation Flip
+./checkpoint/sub_1stage_get_label_512_1stage_Flip_segment_False_augment_Flip_seed_1004.pt
 
 
 1 stage augmentation BrightnessContrast
-
+./checkpoint/sub_1stage_get_label_512_1stage_BrightnessContrast_segment_False_augment_BrightnessContrast_seed_1004.pt
 
 1 stage augmentation RandomShadow
+./checkpoint/sub_1stage_get_label_512_1stage_RandomShadow_segment_False_augment_RandomShadow_seed_1004.pt
 
 1 stage augmentation GoodAugmentations
+./checkpoint/sub_1stage_get_label_512_1stage_Flip_segment_False_augment_GoodAugmentations_seed_1004.pt

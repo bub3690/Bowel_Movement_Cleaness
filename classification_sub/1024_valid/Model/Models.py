@@ -99,9 +99,9 @@ class ResLayer_multilabel_stage1(nn.Module):
         #x  = self.fc1(torch.cat([back,res,col,tur],axis=1))
         return res,col,tur
 
-class ResLayer_multilabel_stage2_base(nn.Module):
+class ResLayer_multilabel_stage2_nohead(nn.Module):
     def __init__(self,sublabel_count,DEVICE,check_point):
-        super(ResLayer_multilabel_stage2_base, self).__init__()
+        super(ResLayer_multilabel_stage2_nohead, self).__init__()
         #여기서 모델 체크포인트 읽어오기.
         
         self.model = ResLayer_multilabel_stage1(DEVICE).to(DEVICE)
@@ -130,7 +130,7 @@ class ResLayer_multilabel_stage2_base(nn.Module):
         
         back = self.model.backbone(x)
 
-        #의문, res,col,tur는 backpropagation이 작동할까? forawrd를 통과안했는데? 안될것으로 추정.
+        #의문, res,col,tur는 backpropagation이 작동할까? forawrd를 통과안했는데? 수행된다.
         
         res = self.model.residue(back)
         col = self.model.color(back)
@@ -139,48 +139,91 @@ class ResLayer_multilabel_stage2_base(nn.Module):
         x  = self.fc1(back)
         return x,res,col,tur
 
-# class ResLayer_multilabel_stage2(nn.Module):
-#     def __init__(self,sublabel_count,DEVICE,check_point):
-#         super(ResLayer_multilabel_stage2, self).__init__()
-#         #여기서 모델 체크포인트 읽어오기.
+class ResLayer_multilabel_stage2_base(nn.Module):
+    def __init__(self,sublabel_count,DEVICE,check_point):
+        super(ResLayer_multilabel_stage2_base, self).__init__()
+        #여기서 모델 체크포인트 읽어오기.
         
-#         self.model = ResLayer_multilabel_stage1(DEVICE).to(DEVICE)
-#         self.model.load_state_dict(torch.load(check_point))
-#         #head freeze
-#         for param in self.model.residue.parameters():
-#             param.requires_grad = False
-#         for param in self.model.color.parameters():
-#             param.requires_grad = False
-#         for param in self.model.turbidity.parameters():
-#             param.requires_grad = False        
+        self.model = ResLayer_multilabel_stage1(DEVICE).to(DEVICE)
+        self.model.load_state_dict(torch.load(check_point))
+        #head freeze
+        # for param in self.model.residue.parameters():
+        #     param.requires_grad = False
+        # for param in self.model.color.parameters():
+        #     param.requires_grad = False
+        # for param in self.model.turbidity.parameters():
+        #     param.requires_grad = False        
 
-#         #self.model = models.resnet18(weights='IMAGENET1K_V1').to(DEVICE)
+        #self.model = models.resnet18(weights='IMAGENET1K_V1').to(DEVICE)
 
-#         self.num_ftrs = self.model.backbone.fc.out_features
+        self.num_ftrs = self.model.backbone.fc.out_features
         
-#         self.fc1 = nn.Sequential(              
-#                         nn.Linear(self.num_ftrs + 8, 64),
-#                         nn.BatchNorm1d(64),
-#                         nn.ReLU(),
-#                         nn.Dropout(p=0.5),        
-#                         nn.Linear(64,50),
-#                         nn.BatchNorm1d(50),
-#                         nn.ReLU(),
-#                         nn.Linear(50,sublabel_count)
-#                     )
+        self.fc1 = nn.Sequential(              
+                        nn.Linear(self.num_ftrs + 8, 64),
+                        nn.BatchNorm1d(64),
+                        nn.ReLU(),
+                        nn.Dropout(p=0.5),        
+                        nn.Linear(64,50),
+                        nn.BatchNorm1d(50),
+                        nn.ReLU(),
+                        nn.Linear(50,sublabel_count)
+                    )
 
-#     def forward(self, x):
+    def forward(self, x):
         
-#         back = self.model.backbone(x)
+        back = self.model.backbone(x)
 
-#         #의문, res,col,tur는 backpropagation이 작동할까? forawrd를 통과안했는데? 안될것으로 추정.
+        #의문, res,col,tur는 backpropagation이 작동할까? forawrd를 통과안했는데? 안될것으로 추정.
         
-#         res = self.model.residue(back)
-#         col = self.model.color(back)
-#         tur = self.model.turbidity(back)
+        res = self.model.residue(back)
+        col = self.model.color(back)
+        tur = self.model.turbidity(back)
 
-#         x  = self.fc1(torch.cat([back,res,col,tur],axis=1))
-#         return x,res,col,tur
+        x  = self.fc1(torch.cat([back,res,col,tur],axis=1))
+        return x,res,col,tur
+
+class ResLayer_multilabel_stage2_base_headfreeze(nn.Module):
+    def __init__(self,sublabel_count,DEVICE,check_point):
+        super(ResLayer_multilabel_stage2_base_headfreeze, self).__init__()
+        #여기서 모델 체크포인트 읽어오기.
+        
+        self.model = ResLayer_multilabel_stage1(DEVICE).to(DEVICE)
+        self.model.load_state_dict(torch.load(check_point))
+        #head freeze
+        for param in self.model.residue.parameters():
+            param.requires_grad = False
+        for param in self.model.color.parameters():
+            param.requires_grad = False
+        for param in self.model.turbidity.parameters():
+            param.requires_grad = False        
+
+        #self.model = models.resnet18(weights='IMAGENET1K_V1').to(DEVICE)
+
+        self.num_ftrs = self.model.backbone.fc.out_features
+        
+        self.fc1 = nn.Sequential(              
+                        nn.Linear(self.num_ftrs + 8, 64),
+                        nn.BatchNorm1d(64),
+                        nn.ReLU(),
+                        nn.Dropout(p=0.5),        
+                        nn.Linear(64,50),
+                        nn.BatchNorm1d(50),
+                        nn.ReLU(),
+                        nn.Linear(50,sublabel_count)
+                    )
+
+    def forward(self, x):
+        
+        back = self.model.backbone(x)
+
+        #의문, res,col,tur는 backpropagation이 작동할까? forawrd를 통과안했는데? 안될것으로 추정.
+        
+        res = self.model.residue(back)
+        col = self.model.color(back)
+        tur = self.model.turbidity(back)
+
+        x  = self.fc1(torch.cat([back,res,col,tur],axis=1))
+        return x,res,col,tur
 
 class ResLayer_multilabel_stage2(nn.Module):
     def __init__(self,sublabel_count,DEVICE,check_point):
@@ -243,8 +286,13 @@ def model_initialize(sublabel_count,DEVICE,model_name='baseline',check_point='')
         model = ResLayer_multilabel_stage1(DEVICE).to(DEVICE)
     elif model_name == 'sub_2stage':
         model = ResLayer_multilabel_stage2(sublabel_count,DEVICE,check_point).to(DEVICE)
+    elif model_name == 'sub_2stage_base':
+        model = ResLayer_multilabel_stage2_base(sublabel_count,DEVICE,check_point).to(DEVICE)
+    elif model_name == 'sub_2stage_nohead':
+        model = ResLayer_multilabel_stage2_nohead(sublabel_count,DEVICE,check_point).to(DEVICE)        
+    elif model_name == 'sub_2stage_base_headfreeze':
+        model = ResLayer_multilabel_stage2_base_headfreeze(sublabel_count,DEVICE,check_point).to(DEVICE)        
     else:
         model = ResLayer(sublabel_count,DEVICE).to(DEVICE)
-
 
     return model

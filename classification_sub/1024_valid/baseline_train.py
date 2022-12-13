@@ -189,7 +189,7 @@ def main():
                 format(Epoch,train_loss,train_res_acc,train_col_acc,train_tur_acc))
             print("[EPOCH:{}]\t Valid Loss:{:.4f} \t Valid resid Acc:{:.2f} % \t Valid col Acc:{:.2f} \t Valid tur Acc:{:.2f} %\n".
                 format(Epoch,valid_loss,valid_res_acc,valid_col_acc,valid_tur_acc))
-        elif args.model == 'sub_2stage':
+        elif "sub_2stage" in args.model:
             train_loss,train_accuracy,train_res_acc,train_col_acc,train_tur_acc = \
                  train(model,train_loader,optimizer,criterion,DEVICE,model_name=args.model)
             valid_loss,valid_accuracy,valid_res_acc,valid_col_acc,valid_tur_acc = \
@@ -219,7 +219,7 @@ def main():
         if -early_stopping.best_score == valid_loss:
             best_train_acc, best_valid_acc = train_accuracy,valid_accuracy
             if args.wandb:
-                if args.model == 'sub_1stage' or args.model == 'sub_2stage':
+                if args.model == 'sub_1stage' or 'sub_2stage' in args.model:
                     wandb.run.summary.update({"best_valid_acc" : best_valid_acc,
                                              "best_valid_loss" : valid_loss,
                                              "best_residue_acc" : valid_res_acc,                                             
@@ -252,10 +252,20 @@ def main():
     if args.model == 'sub_1stage':
         #test 따로 미실시.
         return
-    elif args.model == 'sub_2stage':
+    elif 'sub_2stage' in args.model:
         predictions,prediction_res,prediction_col,prediction_tur,answers,answers_res,answers_col,answers_tur,test_loss = test_evaluate(model, test_loader,criterion,DEVICE,args.model)
         predictions=[ dat.cpu().numpy() for dat in predictions]
         answers=[ dat.cpu().numpy() for dat in answers]
+
+
+        prediction_res=[ dat.cpu().numpy() for dat in prediction_res]
+        prediction_col=[ dat.cpu().numpy() for dat in prediction_col]
+        prediction_tur=[ dat.cpu().numpy() for dat in prediction_tur]
+
+        answers_res=[ dat.cpu().numpy() for dat in answers_res]
+        answers_col=[ dat.cpu().numpy() for dat in answers_col]
+        answers_tur=[ dat.cpu().numpy() for dat in answers_tur]
+
 
         cf = confusion_matrix(answers, predictions)
 

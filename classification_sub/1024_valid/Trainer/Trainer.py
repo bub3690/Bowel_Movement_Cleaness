@@ -250,7 +250,7 @@ def test_evaluate(model,test_loader,criterion,DEVICE,model_name='baseline'):
                 predictions +=prediction
                 #true.false값을 sum해줌. item
             test_loss /= len(test_loader.dataset)
-    elif model_name == "sub_2stage":
+    elif "sub_2stage" in model_name :
         answers_res = []
         answers_col = []
         answers_tur = []
