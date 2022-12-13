@@ -300,8 +300,8 @@ def main():
         #fscroe macro추가
         fscore = f1_score(answers,predictions,average='macro')
         acc = accuracy_score(answers,predictions)
-        wandb.run.summary.update({"last valid_acc" : acc*100,
-                                "last valid_f1" : fscore})
+        wandb.run.summary.update({"test acc" : acc*100,
+                                "test f1" : fscore})
 
         print("Accuracy : {:.4f}% ".format(acc*100))
         print("f score : {:.4f} ".format(fscore))
