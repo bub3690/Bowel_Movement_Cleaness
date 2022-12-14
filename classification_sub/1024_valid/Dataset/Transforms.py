@@ -60,11 +60,12 @@ def get_augementation(augmentation):
         num_flare_circles_upper=2
         src_radius=300
         src_color=(255, 255, 255)
-        augment_dict['album'] = A.Compose([A.RandomSunFlare(flare_roi, angle_lower, angle_upper,
-                                                                num_flare_circles_lower,num_flare_circles_upper,
-                                                                src_radius,
-                                                                src_color,
-                                                                p=0.5),
+        augment_dict['album'] = A.Compose([
+                # A.RandomSunFlare(flare_roi, angle_lower, angle_upper,
+                #                                                 num_flare_circles_lower,num_flare_circles_upper,
+                #                                                 src_radius,
+                #                                                 src_color,
+                #                                                 p=0.5),
                                             A.HorizontalFlip(p=0.3),
                                             A.VerticalFlip(p=0.3),
                                             A.RandomBrightnessContrast(brightness_limit=(-0.2,0.3),p=0.4),
